@@ -1,0 +1,63 @@
+<main class="catalog-page">
+  <section class="hero">
+    <div class="hero__inner">
+      <h1 class="hero__title">Detalle del producto</h1>
+    </div>
+  </section>
+
+  {{#with product}}
+    <section class="catalog-shell detail-view">
+      <article class="detail-card">
+        <div class="detail-card__media">
+          <img src="{{thumbnail}}" alt="{{title}}" />
+        </div>
+
+        <div class="detail-card__content">
+          <p class="product-card__category">{{category}}</p>
+          <h2>{{title}}</h2>
+          <p>{{description}}</p>
+          <p class="product-card__price">Precio: ${{price}}</p>
+          <p class="product-card__stock">Stock: {{stock}}</p>
+
+          <div class="detail-actions">
+            <button class="btn" onclick="decreaseQuantity()">-</button>
+            <p id="quantity" class="detail-actions__qty">1</p>
+            <button class="btn" onclick="addQuantity()">+</button>
+            <button class="btn btn--primary" onclick="addProduct()">Agregar al
+              carrito</button>
+            <a class="btn" id="go-cart" href="/cart">Ir al carrito</a>
+          </div>
+        </div>
+      </article>
+    </section>
+  {{/with}}
+</main>
+<script>
+  const CART_STORAGE_KEY = "cart-id-my-ecommerce"; let count = 1; const
+  addQuantity = () => { if (count < "{{product.stock}}") { count++;
+  document.getElementById("quantity").innerText = count; } }; const
+  decreaseQuantity = () => { if (count > 1) { count--;
+  document.getElementById("quantity").innerText = count; } }; const
+  createNewCart = async () => { const response = await fetch("/api/carts", {
+  method: "POST" }); if (!response.ok) { throw new Error("No se pudo crear un
+  carrito"); } const data = await response.json(); return data.payload._id; };
+  const cartExists = async (cid) => { const response = await
+  fetch(`/api/carts/${cid}`); return response.ok; }; const getOrCreateCartId =
+  async () => { let cid = localStorage.getItem(CART_STORAGE_KEY); if (cid &&
+  !(await cartExists(cid))) { localStorage.removeItem(CART_STORAGE_KEY); cid =
+  null; } if (!cid) { cid = await createNewCart();
+  localStorage.setItem(CART_STORAGE_KEY, cid); }
+  document.getElementById("go-cart").setAttribute("href", `/carts/${cid}`);
+  return cid; }; const requestAddProduct = async (cid, quantity) => { return
+  fetch(`/api/carts/${cid}/products/{{product._id}}`, { method: "POST", headers:
+  { "Content-Type": "application/json" }, body: JSON.stringify({ quantity }) });
+  }; const addProduct = async () => { try { let cid = await getOrCreateCartId();
+  let response = await requestAddProduct(cid, count); if (response.status ===
+  404) { // Si el carrito ya no existe, crea uno nuevo y reintenta.
+  localStorage.removeItem(CART_STORAGE_KEY); cid = await getOrCreateCartId();
+  response = await requestAddProduct(cid, count); } if (!response.ok) { throw
+  new Error("No fue posible agregar el producto"); } alert("Producto agregado al
+  carrito"); } catch (error) { console.log(error); alert("Error al agregar al
+  carrito"); } }; getOrCreateCartId().catch(() => { // No interrumpe el render
+  inicial si falla la creacion del carrito. });
+</script>

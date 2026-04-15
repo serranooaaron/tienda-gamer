@@ -1,0 +1,162 @@
+<main class="catalog-page">
+  <section class="hero">
+    <div class="hero__inner">
+      <h1 class="hero__title">Nuestros productos</h1>
+    </div>
+  </section>
+
+  <section class="catalog-shell">
+    <section class="catalog-toolbar">
+      <div>
+        <p class="catalog-toolbar__label">Catalogo</p>
+        <h2 class="catalog-toolbar__title">Explora y agrega al carrito</h2>
+      </div>
+      <div class="toolbar-actions">
+        <p class="catalog-toolbar__count">Pagina {{page}} de {{totalPages}}</p>
+        <a class="btn" href="/cart">Ver carrito</a>
+      </div>
+    </section>
+
+    <form class="filters" method="GET" action="/products">
+      <div class="filters__field">
+        <label for="query">Filtro</label>
+        <input id="query" name="query" type="text" value="{{queryValue}}" placeholder="categoria, true/false, texto">
+      </div>
+
+      <div class="filters__field">
+        <label for="sort">Orden precio</label>
+        <select id="sort" name="sort">
+          <option value="" {{#unless sortValue}}selected{{/unless}}>Sin orden</option>
+          <option value="asc" {{#if isSortAsc}}selected{{/if}}>Ascendente</option>
+          <option value="desc" {{#if isSortDesc}}selected{{/if}}>Descendente</option>
+        </select>
+      </div>
+
+      <div class="filters__field filters__field--small">
+        <label for="limit">Limit</label>
+        <input id="limit" name="limit" type="number" min="1" value="{{limitValue}}">
+      </div>
+
+      <button class="btn btn--primary" type="submit">Aplicar</button>
+      <a class="btn" href="/products">Limpiar</a>
+    </form>
+
+    <section class="product-grid">
+      {{#each products}}
+      <article class="product-card">
+        <div class="product-card__media">
+          <img src="{{this.thumbnail}}" alt="{{this.title}}">
+        </div>
+
+        <div class="product-card__body">
+          <p class="product-card__category">{{this.category}}</p>
+          <h3 class="product-card__title">{{this.title}}</h3>
+        </div>
+
+        <div class="product-card__footer">
+          <div>
+            <p class="product-card__meta-label">Precio</p>
+            <p class="product-card__price">${{this.price}}</p>
+          </div>
+          <div class="card-actions">
+            <a class="btn" href="/products/{{this._id}}">Ver detalles</a>
+            <button class="btn btn--primary js-add-product" data-pid="{{this._id}}">Agregar</button>
+          </div>
+        </div>
+      </article>
+      {{else}}
+      <div class="empty-state">
+        <h3>No hay productos para mostrar</h3>
+        <p>Cuando cargues productos en la base, apareceran aqui.</p>
+      </div>
+      {{/each}}
+    </section>
+
+    <nav class="pagination" aria-label="Paginacion de productos">
+      {{#if hasPrevPage}}
+      <a class="pagination__link" href="/products?limit={{limitValue}}&page={{prevPage}}{{#if queryValue}}&query={{queryValue}}{{/if}}{{#if sortValue}}&sort={{sortValue}}{{/if}}">Anterior</a>
+      {{/if}}
+      {{#each links}}
+      <a class="pagination__link {{#if this.active}}pagination__link--active{{/if}}" href="{{this.link}}">{{this.number}}</a>
+      {{/each}}
+      {{#if hasNextPage}}
+      <a class="pagination__link" href="/products?limit={{limitValue}}&page={{nextPage}}{{#if queryValue}}&query={{queryValue}}{{/if}}{{#if sortValue}}&sort={{sortValue}}{{/if}}">Siguiente</a>
+      {{/if}}
+    </nav>
+  </section>
+</main>
+
+<script>
+  const CART_STORAGE_KEY = "cart-id-my-ecommerce";
+
+  const createNewCart = async () => {
+    const response = await fetch("/api/carts", { method: "POST" });
+    if (!response.ok) {
+      throw new Error("No fue posible crear un carrito");
+    }
+
+    const data = await response.json();
+    return data.payload._id;
+  };
+
+  const cartExists = async (cid) => {
+    const response = await fetch(`/api/carts/${cid}`);
+    return response.ok;
+  };
+
+  const getOrCreateCartId = async () => {
+    let cid = localStorage.getItem(CART_STORAGE_KEY);
+
+    if (cid && !(await cartExists(cid))) {
+      localStorage.removeItem(CART_STORAGE_KEY);
+      cid = null;
+    }
+
+    if (!cid) {
+      cid = await createNewCart();
+      localStorage.setItem(CART_STORAGE_KEY, cid);
+    }
+
+    return cid;
+  };
+
+  const requestAddProduct = async (cid, pid) => {
+    return fetch(`/api/carts/${cid}/products/${pid}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ quantity: 1 })
+    });
+  };
+
+  const addProduct = async (pid) => {
+    let cid = await getOrCreateCartId();
+
+    let response = await requestAddProduct(cid, pid);
+
+    if (response.status === 404) {
+      // Si el carrito guardado no existe, se recrea y reintenta una vez.
+      localStorage.removeItem(CART_STORAGE_KEY);
+      cid = await getOrCreateCartId();
+      response = await requestAddProduct(cid, pid);
+    }
+
+    if (!response.ok) {
+      throw new Error("No fue posible agregar el producto al carrito");
+    }
+
+    alert("Producto agregado al carrito");
+  };
+
+  document.querySelectorAll(".js-add-product").forEach((button) => {
+    button.addEventListener("click", async (event) => {
+      event.preventDefault();
+
+      try {
+        await addProduct(button.dataset.pid);
+      } catch (error) {
+        console.error(error);
+        alert("Error al agregar al carrito");
+      }
+    });
+  });
+</script>
