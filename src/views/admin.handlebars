@@ -1,0 +1,133 @@
+<main class="container">
+  <header class="page-head admin-head">
+    <div>
+      <p class="eyebrow">Administración</p>
+      <h1>Productos</h1>
+    </div>
+    <button class="btn btn--primary" type="button" data-new-product>+ Nuevo producto</button>
+  </header>
+
+  <section class="stats" aria-label="Resumen del catálogo">
+    <div class="stat"><span>Productos</span><strong>{{stats.total}}</strong></div>
+    <div class="stat"><span>Unidades en stock</span><strong>{{stats.units}}</strong></div>
+    <div class="stat"><span>Sin stock</span><strong>{{stats.outOfStock}}</strong></div>
+    <div class="stat"><span>Pausados</span><strong>{{stats.paused}}</strong></div>
+  </section>
+
+  <form class="toolbar" method="GET" action="/admin" role="search">
+    <div class="toolbar__search">
+      <label class="sr-only" for="admin-q">Buscar producto</label>
+      <input class="input" id="admin-q" name="q" type="search" value="{{q}}" placeholder="Buscar por nombre o código…" maxlength="60" />
+    </div>
+    <button class="btn" type="submit">Buscar</button>
+    {{#if q}}<a class="btn btn--ghost" href="/admin">Limpiar</a>{{/if}}
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Producto</th>
+          <th scope="col">Categoría</th>
+          <th scope="col" class="num">Precio</th>
+          <th scope="col" class="num">Stock</th>
+          <th scope="col">Estado</th>
+          <th scope="col"><span class="sr-only">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each products}}
+          <tr data-product='{{json this}}'>
+            <td>
+              <div class="table__product">
+                <img src="{{thumbnail}}" alt="" />
+                <div>
+                  <strong>{{title}}</strong>
+                  <small>{{code}}</small>
+                </div>
+              </div>
+            </td>
+            <td>{{categoryLabel category}}</td>
+            <td class="num">{{money price}}</td>
+            <td class="num">
+              {{#if (eq stock 0)}}<span class="badge badge--out">0</span>{{else if (lte stock 3)}}<span class="badge badge--warn">{{stock}}</span>{{else}}{{stock}}{{/if}}
+            </td>
+            <td>
+              <button class="badge badge-toggle {{#if status}}badge--ok{{/if}}" type="button" data-toggle-status title="Cambiar estado">
+                {{#if status}}Publicado{{else}}Pausado{{/if}}
+              </button>
+            </td>
+            <td>
+              <div class="table__actions">
+                <a class="btn btn--sm btn--ghost" href="/products/{{_id}}" target="_blank" rel="noreferrer">Ver</a>
+                <button class="btn btn--sm" type="button" data-edit>Editar</button>
+                <button class="btn btn--sm btn--danger" type="button" data-delete>Borrar</button>
+              </div>
+            </td>
+          </tr>
+        {{else}}
+          <tr><td colspan="6"><div class="empty-state"><h3>No hay productos</h3><p>Crea el primero con “Nuevo producto”.</p></div></td></tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<dialog class="modal" id="product-dialog" aria-labelledby="product-dialog-title">
+  <form class="modal__form" id="product-form" novalidate>
+    <header class="modal__head">
+      <h2 id="product-dialog-title">Nuevo producto</h2>
+      <button class="btn btn--icon btn--ghost" type="button" data-close aria-label="Cerrar">✕</button>
+    </header>
+
+    <div class="modal__grid">
+      <div class="field field--wide">
+        <label for="f-title">Nombre</label>
+        <input id="f-title" name="title" required minlength="5" maxlength="100" />
+      </div>
+      <div class="field">
+        <label for="f-code">Código</label>
+        <input id="f-code" name="code" required maxlength="40" />
+      </div>
+      <div class="field">
+        <label for="f-category">Categoría</label>
+        <select id="f-category" name="category" required>
+          {{#each categories}}<option value="{{this}}">{{categoryLabel this}}</option>{{/each}}
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-price">Precio</label>
+        <input id="f-price" name="price" type="number" min="0" step="1" required />
+      </div>
+      <div class="field">
+        <label for="f-stock">Stock</label>
+        <input id="f-stock" name="stock" type="number" min="0" step="1" required />
+      </div>
+      <div class="field field--wide">
+        <label for="f-description">Descripción</label>
+        <textarea id="f-description" name="description" required minlength="10" maxlength="500"></textarea>
+      </div>
+      <div class="field field--wide">
+        <label for="f-thumbnail">Imagen</label>
+        <div class="thumb-picker">
+          <img id="f-thumbnail-preview" alt="" />
+          <select id="f-thumbnail" name="thumbnail">
+            {{#each images}}<option value="{{this}}">{{this}}</option>{{/each}}
+          </select>
+        </div>
+      </div>
+      <label class="check field--wide">
+        <input type="checkbox" name="status" checked />
+        Publicado (visible en la tienda)
+      </label>
+    </div>
+
+    <p class="form-error" data-form-error role="alert"></p>
+    <footer class="modal__foot">
+      <button class="btn btn--ghost" type="button" data-close>Cancelar</button>
+      <button class="btn btn--primary" type="submit">Guardar</button>
+    </footer>
+  </form>
+</dialog>
+
+<script src="/js/admin.js" type="module"></script>

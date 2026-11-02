@@ -3,7 +3,10 @@ import mongoose from "mongoose";
 import Product from "../models/product.model.js";
 import Cart from "../models/cart.model.js";
 import { escapeRegex } from "../utils/regex.js";
-import { requireAuth } from "../middlewares/auth.middleware.js";
+import { readdir } from "node:fs/promises";
+import path from "node:path";
+import __dirname from "../../dirname.js";
+import { requireAdmin, requireAuth } from "../middlewares/auth.middleware.js";
 import { CATEGORY_LABELS } from "../utils/handlebars.js";
 
 const categoryLabel = (value) => CATEGORY_LABELS[value] || value;
@@ -202,6 +205,43 @@ const authPage = (view, title) => (req, res) => {
 
 viewsRouter.get("/login", authPage("login", "Ingresar"));
 viewsRouter.get("/register", authPage("register", "Crear cuenta"));
+
+// Panel de administracion: lista todos los productos (incluso pausados) para gestionarlos.
+viewsRouter.get("/admin", requireAdmin, async (req, res) => {
+  try {
+    const q = req.query.q ? String(req.query.q).trim().slice(0, 60) : "";
+    const filter = q
+      ? { $or: [{ title: { $regex: escapeRegex(q), $options: "i" } }, { code: { $regex: escapeRegex(q), $options: "i" } }] }
+      : {};
+
+    const [products, images, stats] = await Promise.all([
+      Product.find(filter).sort({ title: 1 }).lean(),
+      readdir(path.join(__dirname, "public", "image")).catch(() => []),
+      Product.aggregate([
+        {
+          $group: {
+            _id: null,
+            total: { $sum: 1 },
+            paused: { $sum: { $cond: ["$status", 0, 1] } },
+            outOfStock: { $sum: { $cond: [{ $eq: ["$stock", 0] }, 1, 0] } },
+            units: { $sum: "$stock" },
+          },
+        },
+      ]),
+    ]);
+
+    return res.render("admin", {
+      title: "Administrar productos",
+      products,
+      q,
+      stats: stats[0] || { total: 0, paused: 0, outOfStock: 0, units: 0 },
+      categories: CATEGORIES,
+      images: images.filter((file) => /\.(png|jpe?g|webp|gif)$/i.test(file)).map((file) => `/image/${file}`),
+    });
+  } catch (error) {
+    return renderError(res, 500, "No es posible mostrar el panel");
+  }
+});
 
 // Compatibilidad con los links viejos por id de carrito: siempre lleva al carrito propio.
 viewsRouter.get("/carts/:cid", (_req, res) => res.redirect("/cart"));
