@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import Product from "../models/product.model.js";
 import { requireAdmin } from "../middlewares/auth.middleware.js";
+import { escapeRegex } from "../utils/regex.js";
 
 const productsRouter = express.Router();
 
@@ -33,11 +34,13 @@ const buildProductsFilter = (queryValue) => {
   }
 
   // Fallback flexible: categoria exacta o coincidencia parcial en texto.
+  // El texto se escapa para que no se interprete como expresion regular (evita ReDoS).
+  const pattern = escapeRegex(normalized);
   return {
     $or: [
       { category: normalized },
-      { title: { $regex: normalized, $options: "i" } },
-      { description: { $regex: normalized, $options: "i" } },
+      { title: { $regex: pattern, $options: "i" } },
+      { description: { $regex: pattern, $options: "i" } },
     ],
   };
 };

@@ -1,34 +1,59 @@
-<!-- Genero una vista central -->
-
-<main class="landing-page">
-  <section class="hero landing-hero">
-    
-    <div class="hero__inner">
-      <p class="hero__eyebrow">Tienda gamer</p>
-      <h1 class="hero__title">Equipa tu setup con productos de alto rendimiento</h1>
-      <p class="hero__text">Explora el catalogo, agrega varios productos desde
-        detalle o listado y revisa tu carrito en una vista dedicada.</p>
-      <div class="landing-actions">
-        <a class="btn btn--primary" href="/products">Ver productos</a>
-        <a class="btn" href="/cart">Ir al carrito</a>
+<main>
+  <section class="hero">
+    <div class="container hero__inner">
+      <div class="hero__copy">
+        <p class="eyebrow">Tienda gamer</p>
+        <h1 class="hero__title">Equipa tu setup con periféricos de <span>alto rendimiento</span></h1>
+        <p class="hero__text">Auriculares, mouse, teclados, micrófonos y webcams para jugar, streamear y crear contenido.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="/products">Ver catálogo</a>
+          {{#unless user}}<a class="btn" href="/register">Crear cuenta</a>{{/unless}}
+        </div>
       </div>
+      {{#if featured.[0]}}
+        <a class="hero__showcase" href="/products/{{featured.[0]._id}}">
+          <img src="{{featured.[0].thumbnail}}" alt="{{featured.[0].title}}" />
+          <span class="hero__showcase-tag">
+            <strong>{{featured.[0].title}}</strong>
+            {{money featured.[0].price}}
+          </span>
+        </a>
+      {{/if}}
     </div>
   </section>
 
-  <section class="catalog-shell landing-info">
-    <article class="landing-card">
-      <h2>Flujo rapido</h2>
-      <p>Crea o reutiliza tu carrito automaticamente y agrega productos sin
-        perder contexto.</p>
-    </article>
-    <article class="landing-card">
-      <h2>Filtros avanzados</h2>
-      <p>Ordena por precio, pagina resultados y filtra por categoria,
-        disponibilidad o texto.</p>
-    </article>
-    <article class="landing-card">
-      <h2>Vista de carrito</h2>
-      <p>Visualiza cantidad, subtotal por item y total final de tu compra.</p>
-    </article>
+  <section class="container section">
+    <div class="section__head">
+      <h2>Categorías</h2>
+    </div>
+    <div class="category-grid">
+      {{#each categories}}
+        <a class="category-card" href="/products?category={{value}}">
+          <span class="category-card__icon" aria-hidden="true">{{icon}}</span>
+          <strong>{{categoryLabel value}}</strong>
+          <span>{{count}} {{#if (eq count 1)}}producto{{else}}productos{{/if}}</span>
+        </a>
+      {{/each}}
+    </div>
+  </section>
+
+  {{#if featured.length}}
+    <section class="container section">
+      <div class="section__head">
+        <h2>Destacados</h2>
+        <a class="btn btn--ghost btn--sm" href="/products">Ver todo →</a>
+      </div>
+      <div class="product-grid">
+        {{#each featured}}{{> productCard}}{{/each}}
+      </div>
+    </section>
+  {{/if}}
+
+  <section class="container section">
+    <div class="perks">
+      <div><strong>🔒 Compra segura</strong><span>Tu carrito queda guardado en tu cuenta.</span></div>
+      <div><strong>⚡ Stock en tiempo real</strong><span>Ves cuántas unidades quedan antes de agregar.</span></div>
+      <div><strong>🎯 Filtros rápidos</strong><span>Busca por nombre, categoría o precio.</span></div>
+    </div>
   </section>
 </main>
