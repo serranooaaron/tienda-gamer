@@ -28,5 +28,6 @@ export default {
       .join("")
       .slice(0, 2)
       .toUpperCase(),
-  json: (value) => JSON.stringify(value)
+  json: (value) => JSON.stringify(value),
+  encode: (value) => encodeURIComponent(value ?? "")
 };

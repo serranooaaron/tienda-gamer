@@ -1,0 +1,35 @@
+<main class="container auth">
+  <section class="auth__card">
+    <p class="eyebrow">Nueva cuenta</p>
+    <h1>Crear cuenta</h1>
+    <p class="auth__lead">Tu carrito queda guardado en tu cuenta para retomarlo cuando quieras.</p>
+
+    <form class="auth__form" data-auth-form="/api/sessions/register" data-next="{{next}}" novalidate>
+      <div class="auth__row">
+        <div class="field">
+          <label for="first_name">Nombre</label>
+          <input id="first_name" name="first_name" autocomplete="given-name" maxlength="50" required />
+        </div>
+        <div class="field">
+          <label for="last_name">Apellido</label>
+          <input id="last_name" name="last_name" autocomplete="family-name" maxlength="50" required />
+        </div>
+      </div>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="8" required aria-describedby="password-hint" />
+        <small id="password-hint" class="field__hint">Mínimo 8 caracteres.</small>
+      </div>
+      <p class="form-error" data-form-error role="alert"></p>
+      <button class="btn btn--primary btn--block" type="submit">Crear cuenta</button>
+    </form>
+
+    <p class="auth__switch">¿Ya tienes cuenta? <a href="/login?next={{encode next}}">Ingresar</a></p>
+  </section>
+</main>
+
+<script src="/js/auth.js" type="module"></script>

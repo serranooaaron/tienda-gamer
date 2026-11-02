@@ -566,6 +566,25 @@ main { flex: 1; padding-bottom: 64px; }
 .cart__total dt { color: var(--text); font-weight: 800; }
 .cart__summary [aria-busy="true"] { opacity: 0.6; }
 
+/* ===================== Login y registro ===================== */
+.auth { display: grid; place-items: center; padding-top: clamp(32px, 6vw, 72px); }
+.auth__card {
+  width: 100%;
+  max-width: 460px;
+  padding: clamp(24px, 4vw, 36px);
+  border-radius: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.auth__card h1 { font-size: 2rem; margin: 6px 0; }
+.auth__lead { color: var(--muted); margin-bottom: 22px; }
+.auth__form { display: flex; flex-direction: column; gap: 16px; }
+.auth__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.auth__switch { margin-top: 20px; text-align: center; color: var(--muted); }
+.auth__switch a { color: var(--accent-2); font-weight: 700; }
+.field__hint { color: var(--muted); font-size: 0.8rem; }
+
 /* ===================== Responsive base ===================== */
 @media (max-width: 960px) {
   .cart { grid-template-columns: 1fr; }

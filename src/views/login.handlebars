@@ -1,0 +1,24 @@
+<main class="container auth">
+  <section class="auth__card">
+    <p class="eyebrow">Bienvenido de vuelta</p>
+    <h1>Ingresar</h1>
+    <p class="auth__lead">Accede a tu cuenta para comprar y ver tu carrito.</p>
+
+    <form class="auth__form" data-auth-form="/api/sessions/login" data-next="{{next}}" novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required />
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required />
+      </div>
+      <p class="form-error" data-form-error role="alert"></p>
+      <button class="btn btn--primary btn--block" type="submit">Ingresar</button>
+    </form>
+
+    <p class="auth__switch">¿No tienes cuenta? <a href="/register?next={{encode next}}">Crear una</a></p>
+  </section>
+</main>
+
+<script src="/js/auth.js" type="module"></script>

@@ -190,6 +190,19 @@ viewsRouter.get("/cart", requireAuth, async (req, res) => {
   }
 });
 
+// Solo se aceptan rutas internas como destino tras el login (evita redirecciones abiertas a otros sitios).
+const safeNext = (value) =>
+  typeof value === "string" && value.startsWith("/") && !value.startsWith("//") ? value : "/products";
+
+const authPage = (view, title) => (req, res) => {
+  const next = safeNext(req.query.next);
+  if (req.user) return res.redirect(next);
+  return res.render(view, { title, next });
+};
+
+viewsRouter.get("/login", authPage("login", "Ingresar"));
+viewsRouter.get("/register", authPage("register", "Crear cuenta"));
+
 // Compatibilidad con los links viejos por id de carrito: siempre lleva al carrito propio.
 viewsRouter.get("/carts/:cid", (_req, res) => res.redirect("/cart"));
 
