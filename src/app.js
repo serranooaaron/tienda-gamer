@@ -8,6 +8,7 @@ import sessionsRouter from "./routes/sessions.route.js";
 import { engine } from "express-handlebars";
 import viewsRouter from "./routes/views.route.js";
 import { attachUser } from "./middlewares/auth.middleware.js";
+import helpers from "./utils/handlebars.js";
 import __dirname from "../dirname.js";
 
 //inicializamos las variables de entorno
@@ -28,7 +29,7 @@ app.use(express.static(__dirname + "/public"));
 app.use(attachUser);
 
 //handlebars config
-app.engine("handlebars", engine());
+app.engine("handlebars", engine({ helpers }));
 app.set("view engine", "handlebars");
 app.set("views", __dirname + "/src/views");
 
@@ -37,6 +38,13 @@ app.use("/api/sessions", sessionsRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/carts", cartRouter);
 app.use("/", viewsRouter);
+
+app.use((req, res) => {
+  if (req.originalUrl.startsWith("/api/")) {
+    return res.status(404).json({ status: "error", message: "Ruta no encontrada" });
+  }
+  return res.status(404).render("error", { title: "No encontrado", code: 404, message: "La página que buscas no existe." });
+});
 
 await connectMongoDB();
 

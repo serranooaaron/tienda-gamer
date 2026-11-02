@@ -5,6 +5,21 @@ import Cart from "../models/cart.model.js";
 
 const viewsRouter = express.Router();
 
+// Datos comunes a todas las vistas: ruta actual (para marcar el menu) y unidades en el carrito.
+viewsRouter.use(async (req, res, next) => {
+  res.locals.currentPath = req.path;
+  res.locals.cartCount = 0;
+  if (req.user?.cart) {
+    try {
+      const cart = await Cart.findById(req.user.cart).lean();
+      res.locals.cartCount = cart ? cart.products.reduce((sum, item) => sum + item.quantity, 0) : 0;
+    } catch {
+      // Si falla el conteo, la pagina se muestra igual con el carrito en 0.
+    }
+  }
+  next();
+});
+
 const parsePositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
   if (Number.isNaN(parsed) || parsed <= 0) return fallback;

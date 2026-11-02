@@ -1,27 +1,71 @@
+<!doctype html>
 <html lang="es">
 
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My ecommerce</title>
+    <title>{{#if title}}{{title}} · {{/if}}Tienda Gamer</title>
+    <meta name="description" content="Periféricos gamer: auriculares, mouse, teclados, micrófonos y webcams." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/css/styles.css" />
   </head>
 
   <body>
-    <nav>
-      <ul>
-        <li><a href="/">Inicio</a></li>
-        <li><a href="/products">Productos</a></li>
-        <li><a href="/cart">Carrito</a></li>
-      </ul>
-    </nav>
+    <header class="site-header">
+      <div class="container site-header__inner">
+        <a class="brand" href="/" aria-label="Tienda Gamer, inicio">
+          <span class="brand__mark" aria-hidden="true">🎮</span>
+          <span class="brand__name">Tienda<span>Gamer</span></span>
+        </a>
+
+        <nav class="main-nav" id="main-nav" aria-label="Principal">
+          <a href="/" {{#if (eq currentPath "/")}}aria-current="page"{{/if}}>Inicio</a>
+          <a href="/products" {{#if (startsWith currentPath "/products")}}aria-current="page"{{/if}}>Productos</a>
+          {{#if isAdmin}}
+            <a href="/admin" {{#if (eq currentPath "/admin")}}aria-current="page"{{/if}}>Administrar</a>
+          {{/if}}
+        </nav>
+
+        <div class="header-actions">
+          <a class="btn btn--icon cart-link" href="/cart" aria-label="Carrito">
+            🛒<span class="cart-badge" id="cart-badge" data-count="{{cartCount}}">{{cartCount}}</span>
+          </a>
+
+          {{#if user}}
+            <details class="user-menu">
+              <summary class="avatar-chip" aria-label="Menú de la cuenta">{{initials user.name}}</summary>
+              <div class="user-menu__panel">
+                <p><strong>{{user.name}}</strong>{{user.email}}</p>
+                <a href="/cart">Mi carrito</a>
+                {{#if isAdmin}}<a href="/admin">Panel de administración</a>{{/if}}
+                <button type="button" data-logout>Cerrar sesión</button>
+              </div>
+            </details>
+          {{else}}
+            <a class="btn btn--sm" href="/login">Ingresar</a>
+          {{/if}}
+
+          <button class="btn btn--icon nav-toggle" type="button" aria-controls="main-nav" aria-expanded="false" data-nav-toggle>☰</button>
+        </div>
+      </div>
+    </header>
+
     {{{body}}}
+
+    <footer class="site-footer">
+      <div class="container site-footer__inner">
+        <span>© Tienda Gamer · Proyecto de Aaron Serrano</span>
+        <span>Express · Handlebars · MongoDB</span>
+      </div>
+    </footer>
+
+    <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+    <script src="/js/app.js" type="module"></script>
   </body>
 
 </html>
