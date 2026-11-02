@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Product from "../models/product.model.js";
 import Cart from "../models/cart.model.js";
 import { escapeRegex } from "../utils/regex.js";
+import { requireAuth } from "../middlewares/auth.middleware.js";
 import { CATEGORY_LABELS } from "../utils/handlebars.js";
 
 const categoryLabel = (value) => CATEGORY_LABELS[value] || value;
@@ -143,91 +144,53 @@ viewsRouter.get("/products", async (req, res) => {
     return renderError(res, 500, "No es posible mostrar los productos");
   }
 });
-viewsRouter.get("/cart", async (_req, res) => {
-  return res.render("cartEntry");
-});
-
 viewsRouter.get("/products/:pid", async (req, res) => {
   try {
     const pid = req.params.pid;
-
     if (!mongoose.Types.ObjectId.isValid(pid)) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Id de producto invalido" });
+      return renderError(res, 404, "Ese producto no existe");
     }
 
-    const product = await Product.findById(pid).lean();
-    if (!product) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Producto no encontrado" });
-    }
+    const product = await Product.findOne({ _id: pid, status: true }).lean();
+    if (!product) return renderError(res, 404, "Ese producto no existe o ya no está a la venta");
 
-    res.render("productDetail", { product });
-  } catch (error) {
-    res.status(500).json({
-      status: "error",
-      message: "No es posible mostrar este producto",
-    });
-  }
-});
-
-viewsRouter.get("/detail/:pid", async (req, res) => {
-  return res.redirect(`/products/${req.params.pid}`);
-});
-
-viewsRouter.get("/carts/:cid", async (req, res) => {
-  try {
-    const { cid } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(cid)) {
-      return res
-        .status(400)
-        .json({ status: "error", message: "Id de carrito invalido" });
-    }
-
-    const cart = await Cart.findById(cid)
-      .populate("products.product", "-__v -createdAt -updatedAt")
+    const related = await Product.find({ category: product.category, status: true, _id: { $ne: product._id } })
+      .limit(4)
       .lean();
 
-    if (!cart) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Carrito no encontrado" });
-    }
-
-    const enrichedProducts = cart.products.map((item) => {
-      const price = item.product?.price || 0;
-      const subtotal = price * item.quantity;
-
-      return {
-        ...item,
-        subtotal,
-      };
-    });
-
-    const totalAmount = enrichedProducts.reduce(
-      (acc, item) => acc + item.subtotal,
-      0,
-    );
-    // Se separa total de items y total monetario para renderizar resumen de carrito.
-    const totalItems = enrichedProducts.reduce(
-      (acc, item) => acc + item.quantity,
-      0,
-    );
-
-    return res.render("cart", {
-      cartId: cart._id.toString(),
-      products: enrichedProducts,
-      totalAmount,
-      totalItems,
-    });
+    return res.render("productDetail", { title: product.title, product, related });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ status: "error", message: "No es posible mostrar el carrito" });
+    return renderError(res, 500, "No es posible mostrar este producto");
   }
 });
+
+viewsRouter.get("/detail/:pid", (req, res) => res.redirect(301, `/products/${req.params.pid}`));
+
+// El carrito que se muestra es siempre el del usuario logueado.
+viewsRouter.get("/cart", requireAuth, async (req, res) => {
+  try {
+    const cart = req.user.cart
+      ? await Cart.findById(req.user.cart).populate("products.product", "-__v -createdAt -updatedAt").lean()
+      : null;
+
+    // Si un producto se borro del catalogo, se descarta de la vista.
+    const items = (cart?.products || [])
+      .filter((item) => item.product)
+      .map((item) => ({ ...item, subtotal: item.product.price * item.quantity }));
+
+    return res.render("cart", {
+      title: "Mi carrito",
+      cartId: cart?._id.toString(),
+      items,
+      totalAmount: items.reduce((acc, item) => acc + item.subtotal, 0),
+      totalItems: items.reduce((acc, item) => acc + item.quantity, 0),
+    });
+  } catch (error) {
+    return renderError(res, 500, "No es posible mostrar el carrito");
+  }
+});
+
+// Compatibilidad con los links viejos por id de carrito: siempre lleva al carrito propio.
+viewsRouter.get("/carts/:cid", (_req, res) => res.redirect("/cart"));
 
 export default viewsRouter;

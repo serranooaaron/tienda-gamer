@@ -52,7 +52,7 @@ const addProductToCartHandler = async (req, res) => {
     }
 
     const product = await Product.findById(pid).lean();
-    if (!product)
+    if (!product || !product.status)
       return res
         .status(404)
         .json({ status: "error", message: "Producto no encontrado" });
@@ -66,6 +66,17 @@ const addProductToCartHandler = async (req, res) => {
     const productIndex = cart.products.findIndex(
       (dataProduct) => dataProduct.product.toString() === pid,
     );
+
+    // No se puede pedir mas de lo que hay en stock, contando lo que ya estaba en el carrito.
+    const alreadyInCart = productIndex !== -1 ? cart.products[productIndex].quantity : 0;
+    if (alreadyInCart + parsedQuantity > product.stock) {
+      return res.status(409).json({
+        status: "error",
+        message: product.stock === 0
+          ? "Producto sin stock"
+          : `Solo hay ${product.stock} unidades disponibles${alreadyInCart ? ` y ya tienes ${alreadyInCart} en el carrito` : ""}`,
+      });
+    }
 
     // Si el producto ya estaba en el carrito, acumula cantidad en lugar de duplicarlo.
     if (productIndex !== -1) {
@@ -121,6 +132,14 @@ const updateCartProductQuantityHandler = async (req, res) => {
         status: "error",
         message: "Producto no encontrado en el carrito",
       });
+
+    const product = await Product.findById(pid).select("stock").lean();
+    if (product && parsedQuantity > product.stock) {
+      return res.status(409).json({
+        status: "error",
+        message: `Solo hay ${product.stock} unidades disponibles`,
+      });
+    }
 
     cart.products[productIndex].quantity = parsedQuantity;
     await cart.save();

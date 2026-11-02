@@ -1,61 +1,49 @@
-<main class="catalog-page">
-  <section class="hero">
-    <div class="hero__inner">
-      <h1 class="hero__title">Carrito {{cartId}}</h1>
-    </div>
-  </section>
+<main class="container">
+  <header class="page-head">
+    <p class="eyebrow">Tu compra</p>
+    <h1>Mi carrito</h1>
+  </header>
 
-  <section class="catalog-shell">
-    <section class="cart-summary">
-      <article class="cart-summary__card">
-        <p class="product-card__meta-label">Items totales</p>
-        <p class="cart-summary__value">{{totalItems}}</p>
-      </article>
-      <article class="cart-summary__card">
-        <p class="product-card__meta-label">Total</p>
-        <p class="cart-summary__value">${{totalAmount}}</p>
-      </article>
-      <a class="btn btn--primary" href="/products">Seguir comprando</a>
-    </section>
-
-    <section class="cart-list">
-      {{#each products}}
-        <article class="cart-item">
-          <img
-            src="{{this.product.thumbnail}}"
-            alt="{{this.product.title}}"
-            class="cart-item__image"
-          />
-
-          <div class="cart-item__content">
-            <p class="product-card__category">{{this.product.category}}</p>
-            <h3 class="product-card__title">{{this.product.title}}</h3>
+  <div class="cart" data-cart="{{cartId}}">
+    <section class="cart__items" aria-label="Productos en el carrito">
+      {{#each items}}
+        <article class="cart-item" data-item="{{product._id}}" data-price="{{product.price}}" data-stock="{{product.stock}}">
+          <a class="cart-item__media" href="/products/{{product._id}}">
+            <img src="{{product.thumbnail}}" alt="" />
+          </a>
+          <div class="cart-item__info">
+            <span class="product-card__category">{{categoryLabel product.category}}</span>
+            <a class="cart-item__title" href="/products/{{product._id}}">{{product.title}}</a>
+            <span class="cart-item__unit">{{money product.price}} c/u · {{product.stock}} en stock</span>
           </div>
-
-          <div class="cart-item__meta">
-            <p class="product-card__meta-label">Cantidad</p>
-            <p class="product-card__stock">{{this.quantity}}</p>
+          <div class="stepper stepper--sm">
+            <button class="stepper__btn" type="button" data-qty="-1" aria-label="Quitar una unidad">−</button>
+            <span class="stepper__value" data-qty-value>{{quantity}}</span>
+            <button class="stepper__btn" type="button" data-qty="1" aria-label="Agregar una unidad">+</button>
           </div>
-
-          <div class="cart-item__meta">
-            <p class="product-card__meta-label">Precio unitario</p>
-            <p class="product-card__price">${{this.product.price}}</p>
-          </div>
-
-          <div class="cart-item__meta">
-            <p class="product-card__meta-label">Subtotal</p>
-            <p class="product-card__price">${{this.subtotal}}</p>
-          </div>
-
-          <a class="btn" href="/products/{{this.product._id}}">Ver producto</a>
+          <strong class="cart-item__subtotal" data-subtotal>{{money subtotal}}</strong>
+          <button class="btn btn--icon btn--ghost" type="button" data-remove aria-label="Quitar {{product.title}}">✕</button>
         </article>
-      {{else}}
-        <div class="empty-state">
-          <h3>Este carrito esta vacio</h3>
-          <p>Agrega productos desde el catalogo para verlos aqui.</p>
-          <a class="btn btn--primary" href="/products">Ir a productos</a>
-        </div>
       {{/each}}
+
+      <div class="empty-state" data-empty {{#if items.length}}hidden{{/if}}>
+        <h3>Tu carrito está vacío</h3>
+        <p>Explora el catálogo y agrega tus periféricos favoritos.</p>
+        <a class="btn btn--primary" href="/products">Ver productos</a>
+      </div>
     </section>
-  </section>
+
+    <aside class="cart__summary" data-summary {{#unless items.length}}hidden{{/unless}}>
+      <h2>Resumen</h2>
+      <dl>
+        <div><dt>Unidades</dt><dd data-total-items>{{totalItems}}</dd></div>
+        <div><dt>Envío</dt><dd>A coordinar</dd></div>
+        <div class="cart__total"><dt>Total</dt><dd data-total-amount>{{money totalAmount}}</dd></div>
+      </dl>
+      <a class="btn btn--primary btn--block" href="/products">Seguir comprando</a>
+      <button class="btn btn--danger btn--block" type="button" data-empty-cart>Vaciar carrito</button>
+    </aside>
+  </div>
 </main>
+
+<script src="/js/cart.js" type="module"></script>

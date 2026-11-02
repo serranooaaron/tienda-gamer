@@ -1,63 +1,80 @@
-<main class="catalog-page">
-  <section class="hero">
-    <div class="hero__inner">
-      <h1 class="hero__title">Detalle del producto</h1>
-    </div>
-  </section>
+<main class="container">
+  <nav class="breadcrumb" aria-label="Ruta">
+    <a href="/products">Productos</a>
+    <span aria-hidden="true">/</span>
+    <a href="/products?category={{product.category}}">{{categoryLabel product.category}}</a>
+    <span aria-hidden="true">/</span>
+    <span>{{product.title}}</span>
+  </nav>
 
   {{#with product}}
-    <section class="catalog-shell detail-view">
-      <article class="detail-card">
-        <div class="detail-card__media">
-          <img src="{{thumbnail}}" alt="{{title}}" />
-        </div>
+    <article class="detail">
+      <div class="detail__media">
+        <img src="{{thumbnail}}" alt="{{title}}" />
+      </div>
 
-        <div class="detail-card__content">
-          <p class="product-card__category">{{category}}</p>
-          <h2>{{title}}</h2>
-          <p>{{description}}</p>
-          <p class="product-card__price">Precio: ${{price}}</p>
-          <p class="product-card__stock">Stock: {{stock}}</p>
+      <div class="detail__info">
+        <span class="product-card__category">{{categoryLabel category}}</span>
+        <h1 class="detail__title">{{title}}</h1>
+        <p class="detail__code">Código {{code}}</p>
+        <p class="detail__price">{{money price}}</p>
 
-          <div class="detail-actions">
-            <button class="btn" onclick="decreaseQuantity()">-</button>
-            <p id="quantity" class="detail-actions__qty">1</p>
-            <button class="btn" onclick="addQuantity()">+</button>
-            <button class="btn btn--primary" onclick="addProduct()">Agregar al
-              carrito</button>
-            <a class="btn" id="go-cart" href="/cart">Ir al carrito</a>
+        {{#if (eq stock 0)}}
+          <span class="badge badge--out">Sin stock</span>
+        {{else if (lte stock 3)}}
+          <span class="badge badge--warn">¡Últimas {{stock}} unidades!</span>
+        {{else}}
+          <span class="badge badge--ok">En stock · {{stock}} unidades</span>
+        {{/if}}
+
+        <p class="detail__description">{{description}}</p>
+
+        {{#if (gt stock 0)}}
+          <div class="detail__buy">
+            <div class="stepper" data-stepper data-max="{{stock}}">
+              <button class="stepper__btn" type="button" data-step="-1" aria-label="Quitar una unidad">−</button>
+              <input class="stepper__value" id="qty" type="number" min="1" max="{{stock}}" value="1" aria-label="Cantidad" />
+              <button class="stepper__btn" type="button" data-step="1" aria-label="Agregar una unidad">+</button>
+            </div>
+            <button class="btn btn--primary detail__add" type="button" data-add-to-cart="{{_id}}" data-qty-input="#qty">
+              Agregar al carrito
+            </button>
           </div>
-        </div>
-      </article>
-    </section>
+        {{else}}
+          <button class="btn btn--block" type="button" disabled>Producto agotado</button>
+        {{/if}}
+
+        <ul class="detail__perks">
+          <li>🔒 Tu carrito queda guardado en tu cuenta</li>
+          <li>📦 Stock actualizado al momento</li>
+        </ul>
+      </div>
+    </article>
   {{/with}}
+
+  {{#if related.length}}
+    <section class="section">
+      <div class="section__head">
+        <h2>También te puede interesar</h2>
+      </div>
+      <div class="product-grid">
+        {{#each related}}{{> productCard}}{{/each}}
+      </div>
+    </section>
+  {{/if}}
 </main>
-<script>
-  const CART_STORAGE_KEY = "cart-id-my-ecommerce"; let count = 1; const
-  addQuantity = () => { if (count < "{{product.stock}}") { count++;
-  document.getElementById("quantity").innerText = count; } }; const
-  decreaseQuantity = () => { if (count > 1) { count--;
-  document.getElementById("quantity").innerText = count; } }; const
-  createNewCart = async () => { const response = await fetch("/api/carts", {
-  method: "POST" }); if (!response.ok) { throw new Error("No se pudo crear un
-  carrito"); } const data = await response.json(); return data.payload._id; };
-  const cartExists = async (cid) => { const response = await
-  fetch(`/api/carts/${cid}`); return response.ok; }; const getOrCreateCartId =
-  async () => { let cid = localStorage.getItem(CART_STORAGE_KEY); if (cid &&
-  !(await cartExists(cid))) { localStorage.removeItem(CART_STORAGE_KEY); cid =
-  null; } if (!cid) { cid = await createNewCart();
-  localStorage.setItem(CART_STORAGE_KEY, cid); }
-  document.getElementById("go-cart").setAttribute("href", `/carts/${cid}`);
-  return cid; }; const requestAddProduct = async (cid, quantity) => { return
-  fetch(`/api/carts/${cid}/products/{{product._id}}`, { method: "POST", headers:
-  { "Content-Type": "application/json" }, body: JSON.stringify({ quantity }) });
-  }; const addProduct = async () => { try { let cid = await getOrCreateCartId();
-  let response = await requestAddProduct(cid, count); if (response.status ===
-  404) { // Si el carrito ya no existe, crea uno nuevo y reintenta.
-  localStorage.removeItem(CART_STORAGE_KEY); cid = await getOrCreateCartId();
-  response = await requestAddProduct(cid, count); } if (!response.ok) { throw
-  new Error("No fue posible agregar el producto"); } alert("Producto agregado al
-  carrito"); } catch (error) { console.log(error); alert("Error al agregar al
-  carrito"); } }; getOrCreateCartId().catch(() => { // No interrumpe el render
-  inicial si falla la creacion del carrito. });
+
+<script type="module">
+  // Selector de cantidad: no deja bajar de 1 ni pasar el stock disponible.
+  const stepper = document.querySelector("[data-stepper]");
+  if (stepper) {
+    const input = stepper.querySelector("input");
+    const max = Number(stepper.dataset.max);
+    const clamp = (value) => Math.min(max, Math.max(1, Number(value) || 1));
+    stepper.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-step]");
+      if (button) input.value = clamp(Number(input.value) + Number(button.dataset.step));
+    });
+    input.addEventListener("change", () => (input.value = clamp(input.value)));
+  }
 </script>
