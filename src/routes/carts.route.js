@@ -2,8 +2,18 @@ import express from "express";
 import mongoose from "mongoose";
 import Cart from "../models/cart.model.js";
 import Product from "../models/product.model.js";
+import User from "../models/user.model.js";
+import { requireAuth } from "../middlewares/auth.middleware.js";
+import { COOKIE_NAME, cookieOptions, signToken } from "../utils/auth.js";
 
 const cartRouter = express.Router();
+
+// Todo el carrito requiere sesion, y cada usuario solo puede operar sobre su propio carrito.
+cartRouter.use(requireAuth);
+cartRouter.param("cid", (req, res, next, cid) => {
+  if (req.user.role === "admin" || req.user.cart === cid) return next();
+  return res.status(403).json({ status: "error", message: "Este carrito no te pertenece" });
+});
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -240,11 +250,22 @@ const replaceCartProductsHandler = async (req, res) => {
   }
 };
 
+// Devuelve el carrito del usuario logueado (lo crea si todavia no tiene uno).
 cartRouter.post("/", async (req, res) => {
   try {
-    const cart = await Cart.create({});
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(401).json({ status: "error", message: "Debes iniciar sesion" });
 
-    res.status(201).json({ status: "success", payload: cart });
+    let cart = user.cart ? await Cart.findById(user.cart) : null;
+    if (!cart) {
+      cart = await Cart.create({});
+      user.cart = cart._id;
+      await user.save();
+      // El token lleva el id del carrito: se reemite para que apunte al nuevo.
+      res.cookie(COOKIE_NAME, signToken(user), cookieOptions());
+    }
+
+    res.status(200).json({ status: "success", payload: cart });
   } catch (error) {
     res
       .status(500)

@@ -1,8 +1,20 @@
 import express from "express";
 import mongoose from "mongoose";
 import Product from "../models/product.model.js";
+import { requireAdmin } from "../middlewares/auth.middleware.js";
 
 const productsRouter = express.Router();
+
+// Traduce errores de Mongoose a respuestas claras en lugar de un 500 generico.
+const productErrorResponse = (res, error, fallbackMessage) => {
+  if (error.name === "ValidationError" || error.name === "CastError") {
+    return res.status(400).json({ status: "error", message: "Datos del producto invalidos" });
+  }
+  if (error.code === 11000) {
+    return res.status(409).json({ status: "error", message: "Ya existe un producto con ese titulo o codigo" });
+  }
+  return res.status(500).json({ status: "error", message: fallbackMessage });
+};
 
 const parsePositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
@@ -39,16 +51,14 @@ const buildPageLink = (baseUrl, currentQuery, page) => {
   return `${baseUrl}?${params.toString()}`;
 };
 
-productsRouter.post("/", async (req, res) => {
+productsRouter.post("/", requireAdmin, async (req, res) => {
   try {
     const newProduct = req.body;
 
     const product = await Product.create(newProduct);
     res.status(201).json({ status: "success", payload: product });
   } catch (error) {
-    res
-      .status(500)
-      .json({ status: "error", message: "Error al agregar un producto" });
+    productErrorResponse(res, error, "Error al agregar un producto");
   }
 });
 
@@ -134,7 +144,7 @@ productsRouter.get("/:pid", async (req, res) => {
   }
 });
 
-productsRouter.put("/:pid", async (req, res) => {
+productsRouter.put("/:pid", requireAdmin, async (req, res) => {
   try {
     const pid = req.params.pid;
     const updateData = req.body;
@@ -156,13 +166,11 @@ productsRouter.put("/:pid", async (req, res) => {
 
     res.status(200).json({ status: "success", payload: updatedProduct });
   } catch (error) {
-    res
-      .status(500)
-      .json({ status: "error", message: "Error al actualizar el producto" });
+    productErrorResponse(res, error, "Error al actualizar el producto");
   }
 });
 
-productsRouter.delete("/:pid", async (req, res) => {
+productsRouter.delete("/:pid", requireAdmin, async (req, res) => {
   try {
     const pid = req.params.pid;
 
