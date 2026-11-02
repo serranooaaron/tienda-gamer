@@ -1,50 +1,92 @@
-# Entrega Final CoderHouse - Backend
+# Tienda Gamer
 
-## 1. Objetivo
+E-commerce de periféricos gamer con API REST, vistas renderizadas en el servidor y persistencia en MongoDB.
 
-Desarrollar un backend de ecommerce con API REST, vistas dinamicas y persistencia en MongoDB.
+Parte de la entrega final del curso de Backend ([backend-comision86215](https://github.com/serranooaaron/backend-comision86215)) y le suma una interfaz completa, cuentas de usuario y seguridad.
 
-## 2. Tecnologias Utilizadas
+## Tecnologías
 
-- Node.js
-- Express
-- Express-Handlebars
-- MongoDB + Mongoose
+- Node.js + Express 5
+- Express-Handlebars (vistas) + JavaScript sin frameworks en el navegador
+- MongoDB + Mongoose 9 (`mongoose-paginate-v2`)
+- JWT + bcrypt + cookies `httpOnly` para la autenticación
 
-## 3. Funcionalidades 
+## Funcionalidades
 
-- Gestion de productos (alta, consulta, actualizacion y eliminacion).
-- Gestion de carritos (crear, agregar productos, actualizar cantidades, eliminar productos y vaciar carrito).
-- Paginacion, filtro y ordenamiento en listado de productos.
+**Para clientes**
+- Inicio con producto destacado y categorías
+- Catálogo con búsqueda, filtro por categoría, solo con stock, orden por precio y paginación
+- Detalle de producto con selector de cantidad limitado al stock y productos relacionados
+- Registro e ingreso; el carrito queda guardado en la cuenta
+- Carrito con cambio de cantidades, quitar productos y vaciar, con totales al instante
 
-## 4. Vistas Implementadas
+**Para administradores** (`/admin`)
+- Resumen del catálogo (productos, unidades, sin stock, pausados)
+- Alta, edición, borrado y pausa de productos
 
-- `/` : pagina de inicio.
-- `/products` : listado de productos con filtros y paginacion.
-- `/products/:pid` : detalle de producto.
-- `/cart` : ingreso de ID de carrito.
-- `/carts/:cid` : vista del carrito con totales.
+## Seguridad
 
-## 5. Ejecucion Local
+- Contraseñas con bcrypt; el hash nunca sale de la base (`select: false`)
+- Sesión con JWT en cookie `httpOnly` + `SameSite=Lax` (`Secure` en producción)
+- Crear, editar y borrar productos: solo administradores
+- Cada carrito solo puede ser leído o modificado por su dueño
+- No se puede agregar más unidades que el stock disponible
+- Búsquedas con texto escapado en `$regex` (evita ReDoS)
+- Mismo mensaje para email inexistente o contraseña incorrecta
+- Redirección tras el login solo a rutas internas
 
-1. Instalar dependencias: `npm install`
-2. Configurar variables en `.env`
-3. Ejecutar en desarrollo: `npm run dev`
-4. Cargar datos iniciales (opcional): `npm run seed`
+## Ejecución local
 
-## 6. Variables de Entorno
-
-```env
-PORT=8081
-URI_MONGODB=mongodb://localhost:27017/bdcoder
+```bash
+npm install
 ```
 
-## 7. Deploy en Render
+**Sin base de datos (recomendado para probar):** levanta MongoDB en memoria con productos y dos cuentas de prueba (las credenciales aparecen en la consola y en `scripts/dev-memory.js`). Los datos se borran al cerrar.
 
-1. Subir el repositorio a GitHub.
-2. Crear un `Web Service` en Render.
-3. Configurar comandos:
-   - Build: `npm install`
-   - Start: `npm start`
-4. Definir variable `URI_MONGODB` con MongoDB Atlas.
-5. Desplegar y verificar la URL publica.
+```bash
+npm run dev:memory
+```
+
+**Con MongoDB Atlas:** copia `.env.example` a `.env`, completa las variables y carga los datos iniciales.
+
+```bash
+npm run seed
+```
+
+```bash
+npm run dev
+```
+
+La app queda en http://localhost:8081.
+
+## Variables de entorno
+
+| Variable | Descripción |
+|---|---|
+| `URI_MONGODB` | Cadena de conexión de MongoDB (usa una base propia, ej. `/tienda-gamer`) |
+| `JWT_SECRET` | Clave larga y aleatoria para firmar los tokens |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Opcional: cuenta administradora que crea `npm run seed` |
+| `PORT` | Puerto (por defecto 8081) |
+| `NODE_ENV` | `production` activa la cookie `Secure` |
+
+## Vistas
+
+| Ruta | Descripción |
+|---|---|
+| `/` | Inicio |
+| `/products` | Catálogo con filtros |
+| `/products/:pid` | Detalle de producto |
+| `/cart` | Carrito del usuario (requiere sesión) |
+| `/login`, `/register` | Ingreso y registro |
+| `/admin` | Panel de productos (solo administradores) |
+
+## API
+
+| Método | Ruta | Acceso |
+|---|---|---|
+| `POST` | `/api/sessions/register` · `/login` · `/logout` | Público |
+| `GET` | `/api/sessions/current` | Con sesión |
+| `GET` | `/api/products` · `/api/products/:pid` | Público |
+| `POST` `PUT` `DELETE` | `/api/products` | Administrador |
+| `POST` | `/api/carts` (devuelve el carrito propio) | Con sesión |
+| `GET` `PUT` `DELETE` | `/api/carts/:cid` y `/api/carts/:cid/products/:pid` | Dueño del carrito |
