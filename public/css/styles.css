@@ -601,7 +601,7 @@ main { flex: 1; padding-bottom: 64px; }
 .stat span { color: var(--muted); font-size: 0.85rem; }
 .stat strong { font-size: 1.7rem; }
 
-.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); }
+.table-wrap { position: relative; overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); }
 .table { width: 100%; border-collapse: collapse; min-width: 760px; }
 .table th, .table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .table th { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; background: var(--bg-2); }
