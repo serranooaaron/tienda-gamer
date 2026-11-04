@@ -236,14 +236,29 @@ const replaceCartProductsHandler = async (req, res) => {
     }
 
     const productIds = normalizedProducts.map((item) => item.product);
-    const existingProductsCount = await Product.countDocuments({
+    const availableProducts = await Product.find({
       _id: { $in: productIds },
-    });
-    // Evita referencias colgantes: todos los productos del arreglo deben existir.
-    if (existingProductsCount !== productIds.length) {
+      status: true,
+    })
+      .select("stock title")
+      .lean();
+    // Evita referencias colgantes: todos los productos del arreglo deben existir y estar a la venta.
+    if (availableProducts.length !== productIds.length) {
       return res
         .status(404)
         .json({ status: "error", message: "Uno o mas productos no existen" });
+    }
+
+    // Mismo limite que al agregar de a uno: no se puede pedir mas de lo que hay en stock.
+    const stockById = new Map(availableProducts.map((p) => [p._id.toString(), p]));
+    const overStock = normalizedProducts
+      .map((item) => ({ ...item, found: stockById.get(String(item.product)) }))
+      .find((item) => item.quantity > item.found.stock);
+    if (overStock) {
+      return res.status(409).json({
+        status: "error",
+        message: `Solo hay ${overStock.found.stock} unidades disponibles de ${overStock.found.title}`,
+      });
     }
 
     const updatedCart = await Cart.findByIdAndUpdate(
