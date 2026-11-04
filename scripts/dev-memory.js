@@ -23,7 +23,7 @@ await mongoose.disconnect();
 console.log("🧪 MongoDB en memoria listo. Cuentas de prueba:");
 for (const { email, password, role } of DEV_ACCOUNTS) console.log(`   ${role.padEnd(5)}  ${email} / ${password}`);
 
-await import("../src/app.js");
+await import("../src/server.js");
 
 const shutdown = async () => {
   await mongoose.disconnect();
