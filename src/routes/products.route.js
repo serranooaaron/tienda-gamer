@@ -159,7 +159,7 @@ productsRouter.put("/:pid", requireAdmin, async (req, res) => {
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(pid, updateData, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
     if (!updatedProduct)

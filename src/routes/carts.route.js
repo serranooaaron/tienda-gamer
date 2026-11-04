@@ -182,11 +182,7 @@ const deleteCartProductHandler = async (req, res) => {
         message: "Producto no encontrado en el carrito",
       });
 
-    await Cart.findByIdAndUpdate(
-      cid,
-      { $pull: { products: { product: pid } } },
-      { new: true },
-    );
+    await Cart.findByIdAndUpdate(cid, { $pull: { products: { product: pid } } });
     const updatedCart = await getCartWithPopulate(cid);
 
     return res
@@ -264,7 +260,7 @@ const replaceCartProductsHandler = async (req, res) => {
     const updatedCart = await Cart.findByIdAndUpdate(
       cid,
       { $set: { products: normalizedProducts } },
-      { new: true, runValidators: true },
+      { returnDocument: "after", runValidators: true },
     );
 
     if (!updatedCart)
@@ -358,7 +354,7 @@ cartRouter.delete("/:cid", async (req, res) => {
     const updatedCart = await Cart.findByIdAndUpdate(
       cid,
       { $set: { products: [] } },
-      { new: true },
+      { returnDocument: "after" },
     );
     if (!updatedCart)
       return res
