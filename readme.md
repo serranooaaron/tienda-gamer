@@ -10,6 +10,7 @@ Parte de la entrega final del curso de Backend (Coderhouse, comisión 86215; los
 - Express-Handlebars (vistas) + JavaScript sin frameworks en el navegador
 - MongoDB + Mongoose 9 (`mongoose-paginate-v2`)
 - JWT + bcrypt + cookies `httpOnly` para la autenticación
+- Mocha + Chai + Supertest para los tests
 
 ## Funcionalidades
 
@@ -58,6 +59,16 @@ npm run dev
 ```
 
 La app queda en http://localhost:8081.
+
+## Tests
+
+Tests de integración de la API y las vistas con Mocha, Chai y Supertest. Corren contra MongoDB en memoria, sin tocar ninguna base real.
+
+```bash
+npm test
+```
+
+Cubren sesiones, permisos de administrador, carritos por usuario, límites de stock, escapado de datos en las vistas y redirecciones.
 
 ## Variables de entorno
 
