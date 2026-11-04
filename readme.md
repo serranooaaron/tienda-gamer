@@ -42,7 +42,7 @@ Parte de la entrega final del curso de Backend (Coderhouse, comisión 86215; los
 npm install
 ```
 
-**Sin base de datos (recomendado para probar):** levanta MongoDB en memoria con productos y dos cuentas de prueba (las credenciales aparecen en la consola y en `scripts/dev-memory.js`). Los datos se borran al cerrar.
+**Sin base de datos (recomendado para probar):** levanta MongoDB en memoria con productos y dos cuentas de prueba (las contraseñas se generan en cada arranque y aparecen en la consola). Los datos se borran al cerrar.
 
 ```bash
 npm run dev:memory

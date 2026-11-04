@@ -6,9 +6,12 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import { seedProducts, seedUser } from "../src/data/seeders.js";
 
 // Cuentas de prueba: existen solo en la base en memoria, nunca en Atlas.
+// La contraseña se genera en cada arranque y se muestra por consola.
+const randomPassword = () => crypto.randomBytes(9).toString("base64url");
+
 const DEV_ACCOUNTS = [
-  { email: "admin@tienda.test", password: "admin12345", role: "admin", first_name: "Admin", last_name: "Demo" },
-  { email: "cliente@tienda.test", password: "cliente12345", role: "user", first_name: "Cliente", last_name: "Demo" }
+  { email: "admin@tienda.test", password: randomPassword(), role: "admin", first_name: "Admin", last_name: "Demo" },
+  { email: "cliente@tienda.test", password: randomPassword(), role: "user", first_name: "Cliente", last_name: "Demo" }
 ];
 
 const mongod = await MongoMemoryServer.create();
