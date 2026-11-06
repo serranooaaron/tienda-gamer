@@ -2,6 +2,8 @@ import express from "express";
 import mongoose from "mongoose";
 import Product from "../models/product.model.js";
 import Cart from "../models/cart.model.js";
+import Order from "../models/order.model.js";
+import { ORDERS_LIMIT } from "./orders.route.js";
 import { escapeRegex } from "../utils/regex.js";
 import { readdir } from "node:fs/promises";
 import path from "node:path";
@@ -190,6 +192,72 @@ viewsRouter.get("/cart", requireAuth, async (req, res) => {
     });
   } catch (error) {
     return renderError(res, 500, "No es posible mostrar el carrito");
+  }
+});
+
+// Por qué un producto del carrito no se puede comprar, o null si está todo bien.
+const purchaseProblem = ({ product, quantity }) => {
+  if (!product.status) return "Ya no está a la venta";
+  if (product.stock === 0) return "Sin stock";
+  if (quantity > product.stock) return `Solo quedan ${product.stock}`;
+  return null;
+};
+
+// Revisión antes de confirmar: los datos salen del carrito guardado, no del navegador.
+viewsRouter.get("/checkout", requireAuth, async (req, res) => {
+  try {
+    const cart = req.user.cart
+      ? await Cart.findById(req.user.cart).populate("products.product", "-__v -createdAt -updatedAt").lean()
+      : null;
+    const products = cart?.products || [];
+    const items = products
+      .filter((item) => item.product)
+      .map((item) => ({ ...item, subtotal: item.product.price * item.quantity, problem: purchaseProblem(item) }));
+
+    if (items.length === 0) return res.redirect("/cart");
+
+    return res.render("checkout", {
+      title: "Revisa tu compra",
+      items,
+      totalAmount: items.reduce((acc, item) => acc + item.subtotal, 0),
+      totalItems: items.reduce((acc, item) => acc + item.quantity, 0),
+      canConfirm: items.length === products.length && items.every((item) => !item.problem),
+    });
+  } catch (error) {
+    return renderError(res, 500, "No es posible mostrar tu compra");
+  }
+});
+
+viewsRouter.get("/orders", requireAuth, async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 }).limit(ORDERS_LIMIT).lean();
+    return res.render("orders", {
+      title: "Mis compras",
+      orders: orders.map((order) => ({
+        ...order,
+        units: order.items.reduce((acc, item) => acc + item.quantity, 0),
+      })),
+    });
+  } catch (error) {
+    return renderError(res, 500, "No es posible mostrar tus compras");
+  }
+});
+
+viewsRouter.get("/orders/:oid", requireAuth, async (req, res) => {
+  try {
+    const { oid } = req.params;
+    const order = mongoose.Types.ObjectId.isValid(oid) ? await Order.findById(oid).lean() : null;
+    const canSee = order && (req.user.role === "admin" || order.user.toString() === req.user.id);
+    if (!canSee) return renderError(res, 404, "Esa compra no existe");
+
+    return res.render("orderDetail", {
+      title: `Compra ${order.code}`,
+      order,
+      items: order.items.map((item) => ({ ...item, subtotal: item.price * item.quantity })),
+      justPlaced: req.query.nueva === "1",
+    });
+  } catch (error) {
+    return renderError(res, 500, "No es posible mostrar esta compra");
   }
 });
 

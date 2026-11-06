@@ -1,0 +1,37 @@
+<main class="container">
+  <header class="page-head">
+    <p class="eyebrow">Compra {{order.code}}</p>
+    <h1>{{#if justPlaced}}¡Compra confirmada!{{else}}Detalle de la compra{{/if}}</h1>
+  </header>
+
+  {{#if justPlaced}}
+    <p class="notice notice--ok" role="status">✓ Reservamos tus productos. Tu número de compra es <strong>{{order.code}}</strong>.</p>
+  {{/if}}
+
+  <div class="cart">
+    <section class="cart__items" aria-label="Productos comprados">
+      {{#each items}}
+        <article class="order-line">
+          <img class="order-line__media" src="{{thumbnail}}" alt="" />
+          <div class="order-line__info">
+            <a href="/products/{{product}}"><strong>{{title}}</strong></a>
+            <span>{{quantity}} × {{money price}}</span>
+          </div>
+          <strong class="order-line__subtotal">{{money subtotal}}</strong>
+        </article>
+      {{/each}}
+    </section>
+
+    <aside class="cart__summary">
+      <h2>Resumen</h2>
+      <dl>
+        <div><dt>Fecha</dt><dd><time datetime="{{isoDate order.createdAt}}">{{dateTime order.createdAt}}</time></dd></div>
+        <div><dt>Envío</dt><dd>A coordinar</dd></div>
+        <div class="cart__total"><dt>Total</dt><dd>{{money order.total}}</dd></div>
+      </dl>
+      <a class="btn btn--primary btn--block" href="/products">Seguir comprando</a>
+      <a class="btn btn--block" href="/orders">Mis compras</a>
+      <p class="demo-note">Tienda de demostración: no se realiza ningún cobro ni envío.</p>
+    </aside>
+  </div>
+</main>

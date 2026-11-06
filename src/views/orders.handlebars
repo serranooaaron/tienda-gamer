@@ -1,0 +1,27 @@
+<main class="container">
+  <header class="page-head">
+    <p class="eyebrow">Tu cuenta</p>
+    <h1>Mis compras</h1>
+  </header>
+
+  {{#if orders.length}}
+    <ul class="order-list">
+      {{#each orders}}
+        <li>
+          <a class="order-card" href="/orders/{{_id}}">
+            <span class="order-card__code">{{code}}</span>
+            <time datetime="{{isoDate createdAt}}">{{dateTime createdAt}}</time>
+            <span class="order-card__units">{{units}} {{#if (eq units 1)}}unidad{{else}}unidades{{/if}}</span>
+            <strong>{{money total}}</strong>
+          </a>
+        </li>
+      {{/each}}
+    </ul>
+  {{else}}
+    <div class="empty-state">
+      <h3>Todavía no hiciste compras</h3>
+      <p>Cuando confirmes una compra, la vas a ver acá.</p>
+      <a class="btn btn--primary" href="/products">Ver productos</a>
+    </div>
+  {{/if}}
+</main>

@@ -2,6 +2,7 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import productsRouter from "./routes/products.route.js";
 import cartRouter from "./routes/carts.route.js";
+import ordersRouter from "./routes/orders.route.js";
 import sessionsRouter from "./routes/sessions.route.js";
 import { engine } from "express-handlebars";
 import viewsRouter from "./routes/views.route.js";
@@ -28,6 +29,7 @@ app.set("views", __dirname + "/src/views");
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/carts", cartRouter);
+app.use("/api/orders", ordersRouter);
 app.use("/", viewsRouter);
 
 app.use((req, res) => {

@@ -1,0 +1,40 @@
+<main class="container">
+  <header class="page-head">
+    <p class="eyebrow">Último paso</p>
+    <h1>Revisa tu compra</h1>
+  </header>
+
+  <div class="cart">
+    <section class="cart__items" aria-label="Productos de la compra">
+      {{#each items}}
+        <article class="order-line">
+          <img class="order-line__media" src="{{product.thumbnail}}" alt="" />
+          <div class="order-line__info">
+            <strong>{{product.title}}</strong>
+            <span>{{quantity}} × {{money product.price}}</span>
+            {{#if problem}}<span class="order-line__problem">⚠ {{problem}}</span>{{/if}}
+          </div>
+          <strong class="order-line__subtotal">{{money subtotal}}</strong>
+        </article>
+      {{/each}}
+    </section>
+
+    <aside class="cart__summary">
+      <h2>Resumen</h2>
+      <dl>
+        <div><dt>Unidades</dt><dd>{{totalItems}}</dd></div>
+        <div><dt>Envío</dt><dd>A coordinar</dd></div>
+        <div class="cart__total"><dt>Total</dt><dd>{{money totalAmount}}</dd></div>
+      </dl>
+      {{#if canConfirm}}
+        <button class="btn btn--primary btn--block" type="button" data-confirm-order>Confirmar compra</button>
+      {{else}}
+        <p class="notice" role="alert">Hay productos sin stock suficiente. Ajusta tu carrito para continuar.</p>
+      {{/if}}
+      <a class="btn btn--block" href="/cart">Volver al carrito</a>
+      <p class="demo-note">Tienda de demostración: no se realiza ningún cobro ni envío.</p>
+    </aside>
+  </div>
+</main>
+
+<script src="/js/checkout.js" type="module"></script>

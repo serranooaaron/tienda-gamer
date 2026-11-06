@@ -20,6 +20,8 @@ Parte de la entrega final del curso de Backend (Coderhouse, comisión 86215; los
 - Detalle de producto con selector de cantidad limitado al stock y productos relacionados
 - Registro e ingreso; el carrito queda guardado en la cuenta
 - Carrito con cambio de cantidades, quitar productos y vaciar, con totales al instante
+- Checkout con revisión de la compra, orden con número propio y descuento de stock
+- Página "Mis compras" con el historial y el detalle de cada orden
 
 **Para administradores** (`/admin`)
 - Resumen del catálogo (productos, unidades, sin stock, pausados)
@@ -31,6 +33,8 @@ Parte de la entrega final del curso de Backend (Coderhouse, comisión 86215; los
 - Sesión con JWT en cookie `httpOnly` + `SameSite=Lax` (`Secure` en producción)
 - Crear, editar y borrar productos: solo administradores
 - Cada carrito solo puede ser leído o modificado por su dueño
+- El precio y el total de una compra se calculan en el servidor; cada usuario solo ve sus órdenes
+- El stock se descuenta en una operación atómica: la última unidad no se vende dos veces y un doble clic no duplica la compra
 - No se puede agregar más unidades que el stock disponible
 - Búsquedas con texto escapado en `$regex` (evita ReDoS)
 - Mismo mensaje para email inexistente o contraseña incorrecta
@@ -68,7 +72,7 @@ Tests de integración de la API y las vistas con Mocha, Chai y Supertest. Corren
 npm test
 ```
 
-Cubren sesiones, permisos de administrador, carritos por usuario, límites de stock, escapado de datos en las vistas y redirecciones.
+Cubren sesiones, permisos de administrador, carritos por usuario, compras, límites de stock, compras simultáneas, escapado de datos en las vistas y redirecciones.
 
 ## Variables de entorno
 
@@ -88,6 +92,9 @@ Cubren sesiones, permisos de administrador, carritos por usuario, límites de st
 | `/products` | Catálogo con filtros |
 | `/products/:pid` | Detalle de producto |
 | `/cart` | Carrito del usuario (requiere sesión) |
+| `/checkout` | Revisión y confirmación de la compra (requiere sesión) |
+| `/orders` | Mis compras (requiere sesión) |
+| `/orders/:oid` | Detalle de una compra (dueño o administrador) |
 | `/login`, `/register` | Ingreso y registro |
 | `/admin` | Panel de productos (solo administradores) |
 
@@ -101,3 +108,5 @@ Cubren sesiones, permisos de administrador, carritos por usuario, límites de st
 | `POST` `PUT` `DELETE` | `/api/products` | Administrador |
 | `POST` | `/api/carts` (devuelve el carrito propio) | Con sesión |
 | `GET` `PUT` `DELETE` | `/api/carts/:cid` y `/api/carts/:cid/products/:pid` | Dueño del carrito |
+| `POST` `GET` | `/api/orders` (compra el carrito propio; lista las compras propias) | Con sesión |
+| `GET` | `/api/orders/:oid` | Dueño de la compra o administrador |

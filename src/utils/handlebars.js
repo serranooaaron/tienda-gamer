@@ -5,6 +5,12 @@ const moneyFormatter = new Intl.NumberFormat("es-AR", {
   maximumFractionDigits: 0
 });
 
+const dateFormatter = new Intl.DateTimeFormat("es-AR", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "America/Argentina/Buenos_Aires"
+});
+
 export const CATEGORY_LABELS = {
   auriculares: "Auriculares",
   teclados: "Teclados",
@@ -20,6 +26,8 @@ export default {
   startsWith: (value, prefix) => typeof value === "string" && value.startsWith(prefix),
   money: (value) => moneyFormatter.format(Number(value) || 0),
   multiply: (a, b) => Number(a) * Number(b),
+  dateTime: (value) => dateFormatter.format(new Date(value)),
+  isoDate: (value) => new Date(value).toISOString(),
   categoryLabel: (value) => CATEGORY_LABELS[value] || value,
   initials: (name = "") =>
     name
