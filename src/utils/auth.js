@@ -4,7 +4,8 @@ import jwt from "jsonwebtoken";
 export const COOKIE_NAME = "tiendaToken";
 const TOKEN_TTL_SECONDS = 60 * 60 * 24; // 24 horas
 
-export const createHash = (password) => bcrypt.hash(password, 10);
+// Costo 12: cada intento de adivinar una contraseña filtrada lleva unas 4 veces más que con 10.
+export const createHash = (password) => bcrypt.hash(password, 12);
 export const isValidPassword = (password, hash) => bcrypt.compare(password, hash);
 
 const getJwtSecret = () => {

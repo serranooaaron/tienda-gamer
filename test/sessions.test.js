@@ -29,7 +29,7 @@ describe("Sesiones", () => {
       await request.post("/api/sessions/register").send(data);
       const user = await User.findOne({ email: data.email }).select("+password");
       expect(user.password).to.not.equal(data.password);
-      expect(user.password).to.match(/^\$2[aby]\$/);
+      expect(user.password).to.match(/^\$2[aby]\$12\$/);
     });
 
     it("ignora un rol enviado por el cliente", async () => {
