@@ -24,6 +24,44 @@ try {
 const updatePreview = () => (preview.src = thumbSelect.value || "");
 thumbSelect.addEventListener("change", updatePreview);
 
+// "Subir imagen nueva": la sube apenas se elige, la agrega al selector y la deja elegida.
+const fileInput = form.querySelector("[data-image-upload]");
+const uploadLabel = form.querySelector("[data-image-upload-label]");
+const uploadStatus = form.querySelector("[data-image-upload-status]");
+const UPLOAD_HINT = uploadStatus.textContent;
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
+fileInput.addEventListener("change", async () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  errorEl.textContent = "";
+  if (file.size > MAX_IMAGE_BYTES) {
+    errorEl.textContent = "La imagen no puede superar 2 MB";
+    fileInput.value = "";
+    return;
+  }
+
+  const body = new FormData();
+  body.append("image", file);
+  fileInput.disabled = true;
+  uploadLabel.classList.add("is-busy");
+  uploadStatus.textContent = "Subiendo imagen…";
+  try {
+    const { payload } = await api("/api/products/images", { method: "POST", body });
+    thumbSelect.prepend(new Option(payload.url, payload.url));
+    thumbSelect.value = payload.url;
+    updatePreview();
+    uploadStatus.textContent = "Imagen subida y elegida. Guarda el producto para usarla.";
+  } catch (error) {
+    errorEl.textContent = error.message;
+    uploadStatus.textContent = UPLOAD_HINT;
+  } finally {
+    fileInput.disabled = false;
+    fileInput.value = "";
+    uploadLabel.classList.remove("is-busy");
+  }
+});
+
 const openForm = (product) => {
   editingId = product?._id ?? null;
   form.reset();

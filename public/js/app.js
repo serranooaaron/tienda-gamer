@@ -17,12 +17,13 @@ export const toast = (message, { type = "ok", action } = {}) => {
   setTimeout(() => el.remove(), 3500);
 };
 
-// fetch a la API con JSON; lanza un Error con el mensaje del servidor si falla.
+// fetch a la API con JSON o FormData (archivos); lanza un Error con el mensaje del servidor si falla.
 export const api = async (url, { method = "GET", body } = {}) => {
+  const isForm = body instanceof FormData;
   const res = await fetch(url, {
     method,
-    headers: body ? { "Content-Type": "application/json" } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
+    headers: body && !isForm ? { "Content-Type": "application/json" } : undefined,
+    body: body ? (isForm ? body : JSON.stringify(body)) : undefined,
     credentials: "same-origin"
   });
   if (res.status === 204) return null;

@@ -10,6 +10,7 @@ import path from "node:path";
 import __dirname from "../../dirname.js";
 import { requireAdmin, requireAuth } from "../middlewares/auth.middleware.js";
 import { CATEGORY_LABELS } from "../utils/handlebars.js";
+import { listUploadedImages } from "../utils/uploader.js";
 
 const categoryLabel = (value) => CATEGORY_LABELS[value] || value;
 
@@ -282,9 +283,10 @@ viewsRouter.get("/admin", requireAdmin, async (req, res) => {
       ? { $or: [{ title: { $regex: escapeRegex(q), $options: "i" } }, { code: { $regex: escapeRegex(q), $options: "i" } }] }
       : {};
 
-    const [products, images, stats] = await Promise.all([
+    const [products, images, uploaded, stats] = await Promise.all([
       Product.find(filter).sort({ title: 1 }).lean(),
       readdir(path.join(__dirname, "public", "image")).catch(() => []),
+      listUploadedImages(),
       Product.aggregate([
         {
           $group: {
@@ -304,7 +306,11 @@ viewsRouter.get("/admin", requireAdmin, async (req, res) => {
       q,
       stats: stats[0] || { total: 0, paused: 0, outOfStock: 0, units: 0 },
       categories: CATEGORIES,
-      images: images.filter((file) => /\.(png|jpe?g|webp|gif)$/i.test(file)).map((file) => `/image/${file}`),
+      // Primero las subidas desde el panel (las más nuevas arriba) y después las de fábrica.
+      images: [
+        ...uploaded,
+        ...images.filter((file) => /\.(png|jpe?g|webp|gif)$/i.test(file)).map((file) => `/image/${file}`),
+      ],
     });
   } catch (error) {
     return renderError(res, 500, "No es posible mostrar el panel");

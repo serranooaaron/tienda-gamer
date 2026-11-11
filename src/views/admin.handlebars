@@ -115,6 +115,11 @@
             {{#each images}}<option value="{{this}}">{{this}}</option>{{/each}}
           </select>
         </div>
+        <div class="thumb-upload">
+          <input class="sr-only" id="f-image-file" type="file" accept="image/png,image/jpeg,image/webp" aria-describedby="f-image-hint" data-image-upload />
+          <label class="btn btn--ghost btn--sm" for="f-image-file" data-image-upload-label>Subir imagen nueva</label>
+          <span class="field__hint" id="f-image-hint" data-image-upload-status>PNG, JPG o WebP de hasta 2 MB.</span>
+        </div>
       </div>
       <label class="check field--wide">
         <input type="checkbox" name="status" checked />

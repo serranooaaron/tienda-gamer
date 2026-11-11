@@ -24,7 +24,8 @@
     "express-handlebars": "^9.0.4",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.2.4",
-    "mongoose-paginate-v2": "^1.9.1"
+    "mongoose-paginate-v2": "^1.9.1",
+    "multer": "2.5.0"
   },
   "devDependencies": {
     "chai": "6.3.0",

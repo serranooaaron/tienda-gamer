@@ -633,6 +633,12 @@ main { flex: 1; padding-bottom: 64px; }
 .thumb-picker { display: flex; align-items: center; gap: 12px; }
 .thumb-picker img { width: 64px; height: 64px; object-fit: contain; border-radius: 12px; background: #eef0f4; padding: 6px; flex-shrink: 0; }
 .thumb-picker select { flex: 1; }
+.thumb-upload { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+.thumb-upload .btn { min-height: 40px; border: 1px dashed #4a5262; }
+.thumb-upload .btn:hover { border-color: var(--accent-2); background: var(--accent-soft); }
+.thumb-upload .btn:active { transform: translateY(1px); }
+.thumb-upload input:focus-visible + .btn { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+.thumb-upload .btn.is-busy { opacity: 0.5; cursor: progress; pointer-events: none; }
 
 /* ===================== Responsive base ===================== */
 /* ===================== Compras ===================== */

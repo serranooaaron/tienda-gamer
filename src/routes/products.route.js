@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Product from "../models/product.model.js";
 import { requireAdmin } from "../middlewares/auth.middleware.js";
 import { escapeRegex } from "../utils/regex.js";
+import { uploadProductImage } from "../utils/uploader.js";
 
 const productsRouter = express.Router();
 
@@ -53,6 +54,11 @@ const buildPageLink = (baseUrl, currentQuery, page) => {
   params.set("page", String(page));
   return `${baseUrl}?${params.toString()}`;
 };
+
+// Sube una imagen para usar como foto de un producto y devuelve su dirección pública.
+productsRouter.post("/images", requireAdmin, uploadProductImage, (req, res) => {
+  res.status(201).json({ status: "success", payload: { url: req.imageUrl } });
+});
 
 productsRouter.post("/", requireAdmin, async (req, res) => {
   try {

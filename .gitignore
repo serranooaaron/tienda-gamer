@@ -1,3 +1,5 @@
 .env
 /node_modules
 .claude
+# Imágenes de productos subidas desde el panel
+/public/image/uploads/
