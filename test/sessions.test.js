@@ -4,6 +4,7 @@ import app from "../src/app.js";
 import Cart from "../src/models/cart.model.js";
 import User from "../src/models/user.model.js";
 import { loginAs, randomPassword, request, userData } from "./helpers.js";
+import { createLoginLimiter } from "../src/utils/loginLimiter.js";
 
 describe("Sesiones", () => {
   describe("POST /api/sessions/register", () => {
@@ -91,6 +92,56 @@ describe("Sesiones", () => {
 
     it("pide email y contraseña", async () => {
       await request.post("/api/sessions/login").send({}).expect(400);
+    });
+  });
+
+  describe("Límite de intentos de login", () => {
+    const tryLogin = (email, password) => request.post("/api/sessions/login").send({ email, password });
+
+    it("después de 5 contraseñas incorrectas bloquea la cuenta aunque la sexta sea la correcta", async () => {
+      const { email, password } = await loginAs();
+      for (let i = 0; i < 5; i++) expect((await tryLogin(email, "incorrecta")).status).to.equal(401);
+
+      const blocked = await tryLogin(email, password);
+
+      expect(blocked.status).to.equal(429);
+      expect(Number(blocked.headers["retry-after"])).to.be.within(1, 15 * 60);
+      expect(blocked.body.message).to.match(/Prueba de nuevo en 15 minutos/);
+    });
+
+    it("un login correcto reinicia el contador de la cuenta", async () => {
+      const { email, password } = await loginAs();
+      for (let i = 0; i < 4; i++) await tryLogin(email, "incorrecta");
+      expect((await tryLogin(email, password)).status).to.equal(200);
+      for (let i = 0; i < 4; i++) await tryLogin(email, "incorrecta");
+      expect((await tryLogin(email, password)).status).to.equal(200);
+    });
+
+    it("el bloqueo de una cuenta no afecta a otra", async () => {
+      const victim = await loginAs();
+      const other = await loginAs();
+      for (let i = 0; i < 5; i++) await tryLogin(victim.email, "incorrecta");
+
+      expect((await tryLogin(other.email, other.password)).status).to.equal(200);
+    });
+
+    it("frena a una IP que prueba muchas cuentas distintas", async () => {
+      for (let i = 0; i < 30; i++) expect((await tryLogin(`nadie${i}@example.com`, "incorrecta")).status).to.equal(401);
+      expect((await tryLogin("una-mas@example.com", "incorrecta")).status).to.equal(429);
+    });
+
+    it("el bloqueo termina al pasar la ventana de tiempo", () => {
+      let clock = 0;
+      const limiter = createLoginLimiter({ windowMs: 1000, maxPerAccount: 2, now: () => clock });
+      const req = { ip: "1.2.3.4", body: { email: "Ana@Example.com " } };
+
+      limiter.fail(req);
+      limiter.fail(req);
+      expect(limiter.retryAfter(req)).to.equal(1);
+      expect(limiter.retryAfter({ ip: "1.2.3.4", body: { email: "ana@example.com" } })).to.equal(1);
+
+      clock = 1000;
+      expect(limiter.retryAfter(req)).to.equal(0);
     });
   });
 

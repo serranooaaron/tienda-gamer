@@ -15,6 +15,9 @@ import __dirname from "../dirname.js";
 const app = express();
 
 app.disable("x-powered-by");
+// Detrás del proxy de la plataforma (Render), req.ip sería siempre la IP del proxy:
+// TRUST_PROXY indica cuántos saltos de proxy creer para leer la IP real del visitante.
+if (process.env.TRUST_PROXY) app.set("trust proxy", Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
 app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 app.use(express.static(__dirname + "/public"));

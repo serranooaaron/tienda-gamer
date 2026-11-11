@@ -3,6 +3,7 @@ import Cart from "../models/cart.model.js";
 import User from "../models/user.model.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { COOKIE_NAME, cookieOptions, createHash, isValidPassword, signToken } from "../utils/auth.js";
+import { loginLimiter, waitMessage } from "../utils/loginLimiter.js";
 
 const sessionsRouter = express.Router();
 
@@ -54,11 +55,19 @@ sessionsRouter.post("/login", async (req, res) => {
       return res.status(400).json({ status: "error", message: "Ingresa email y contraseña" });
     }
 
+    // Bloqueado por demasiados fallos: ni siquiera se compara la contraseña.
+    const wait = loginLimiter.retryAfter(req);
+    if (wait) {
+      return res.status(429).set("Retry-After", String(wait)).json({ status: "error", message: waitMessage(wait) });
+    }
+
     const user = await User.findOne({ email: String(email).toLowerCase().trim() }).select("+password");
     // Mismo mensaje si el email no existe o la contraseña falla: no se revela que cuentas existen.
     if (!user || !(await isValidPassword(String(password), user.password))) {
+      loginLimiter.fail(req);
       return res.status(401).json({ status: "error", message: "Email o contraseña incorrectos" });
     }
+    loginLimiter.succeed(req);
 
     if (!user.cart) {
       const cart = await Cart.create({});
