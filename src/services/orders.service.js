@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import crypto from "node:crypto";
 import Cart from "../models/cart.model.js";
 import Order from "../models/order.model.js";
@@ -24,7 +25,7 @@ export const createOrderFromCart = async ({ userId, cartId }) => {
   // Tomar el carrito vaciándolo en una sola operación: de dos pedidos simultáneos, gana uno.
   const claimed = cartId
     ? await Cart.findOneAndUpdate(
-        { _id: cartId, "products.0": { $exists: true } },
+        { _id: cartId, "products.0": mongoose.trusted({ $exists: true }) },
         { $set: { products: [] } },
         { returnDocument: "before" },
       ).lean()
@@ -33,7 +34,7 @@ export const createOrderFromCart = async ({ userId, cartId }) => {
 
   const reserved = [];
   try {
-    const products = await Product.find({ _id: { $in: claimed.products.map((item) => item.product) } }).lean();
+    const products = await Product.find({ _id: mongoose.trusted({ $in: claimed.products.map((item) => item.product) }) }).lean();
     const byId = new Map(products.map((product) => [product._id.toString(), product]));
     const items = [];
 
@@ -46,7 +47,7 @@ export const createOrderFromCart = async ({ userId, cartId }) => {
       // La condición va en la misma operación que el descuento: el stock nunca queda negativo,
       // aunque dos personas compren la última unidad al mismo tiempo.
       const { modifiedCount } = await Product.updateOne(
-        { _id: id, status: true, stock: { $gte: quantity } },
+        { _id: id, status: true, stock: mongoose.trusted({ $gte: quantity }) },
         { $inc: { stock: -quantity } },
       );
       if (!modifiedCount) throw new CheckoutError(409, `No hay stock suficiente de ${product.title}`);

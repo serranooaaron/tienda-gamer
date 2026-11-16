@@ -233,7 +233,7 @@ const replaceCartProductsHandler = async (req, res) => {
 
     const productIds = normalizedProducts.map((item) => item.product);
     const availableProducts = await Product.find({
-      _id: { $in: productIds },
+      _id: mongoose.trusted({ $in: productIds }),
       status: true,
     })
       .select("stock title")

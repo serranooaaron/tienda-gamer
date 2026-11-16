@@ -40,8 +40,8 @@ const buildProductsFilter = (queryValue) => {
   return {
     $or: [
       { category: normalized },
-      { title: { $regex: pattern, $options: "i" } },
-      { description: { $regex: pattern, $options: "i" } },
+      { title: mongoose.trusted({ $regex: pattern, $options: "i" }) },
+      { description: mongoose.trusted({ $regex: pattern, $options: "i" }) },
     ],
   };
 };

@@ -66,7 +66,7 @@ const getCategoriesWithCount = async () => {
 viewsRouter.get("/", async (_req, res) => {
   try {
     const [featured, categories] = await Promise.all([
-      Product.find({ status: true, stock: { $gt: 0 } })
+      Product.find({ status: true, stock: mongoose.trusted({ $gt: 0 }) })
         .sort({ price: -1 })
         .limit(4)
         .lean(),
@@ -91,9 +91,9 @@ viewsRouter.get("/products", async (req, res) => {
 
     const filter = { status: true };
     if (category) filter.category = category;
-    if (available) filter.stock = { $gt: 0 };
+    if (available) filter.stock = mongoose.trusted({ $gt: 0 });
     if (q) {
-      const pattern = { $regex: escapeRegex(q), $options: "i" };
+      const pattern = mongoose.trusted({ $regex: escapeRegex(q), $options: "i" });
       filter.$or = [{ title: pattern }, { description: pattern }];
     }
 
@@ -160,7 +160,7 @@ viewsRouter.get("/products/:pid", async (req, res) => {
     const product = await Product.findOne({ _id: pid, status: true }).lean();
     if (!product) return renderError(res, 404, "Ese producto no existe o ya no está a la venta");
 
-    const related = await Product.find({ category: product.category, status: true, _id: { $ne: product._id } })
+    const related = await Product.find({ category: product.category, status: true, _id: mongoose.trusted({ $ne: product._id }) })
       .limit(4)
       .lean();
 
@@ -280,7 +280,7 @@ viewsRouter.get("/admin", requireAdmin, async (req, res) => {
   try {
     const q = req.query.q ? String(req.query.q).trim().slice(0, 60) : "";
     const filter = q
-      ? { $or: [{ title: { $regex: escapeRegex(q), $options: "i" } }, { code: { $regex: escapeRegex(q), $options: "i" } }] }
+      ? { $or: [{ title: mongoose.trusted({ $regex: escapeRegex(q), $options: "i" }) }, { code: mongoose.trusted({ $regex: escapeRegex(q), $options: "i" }) }] }
       : {};
 
     const [products, images, uploaded, stats] = await Promise.all([

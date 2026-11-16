@@ -14,6 +14,10 @@ import __dirname from "../dirname.js";
 
 // La app solo arma las rutas: conectar la base y abrir el puerto queda en server.js,
 // así los tests pueden importarla sin levantar nada.
+// Un objeto con operadores ($ne, $gt...) que llegue desde el cliente dentro de un filtro se toma como valor literal.
+// Los operadores que pone el servidor a propósito van marcados con mongoose.trusted().
+mongoose.set("sanitizeFilter", true);
+
 const app = express();
 
 app.disable("x-powered-by");
