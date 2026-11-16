@@ -98,6 +98,16 @@ describe("Sesiones", () => {
   describe("Límite de intentos de login", () => {
     const tryLogin = (email, password) => request.post("/api/sessions/login").send({ email, password });
 
+    it("frena a una IP que registra más de 10 cuentas en una hora", async () => {
+      for (let i = 0; i < 10; i++) await request.post("/api/sessions/register").send(userData()).expect(201);
+
+      const blocked = await request.post("/api/sessions/register").send(userData());
+
+      expect(blocked.status).to.equal(429);
+      expect(blocked.body.message).to.match(/Demasiados registros desde esta conexión/);
+      expect(Number(blocked.headers["retry-after"])).to.be.within(1, 60 * 60);
+    });
+
     it("después de 5 contraseñas incorrectas bloquea la cuenta aunque la sexta sea la correcta", async () => {
       const { email, password } = await loginAs();
       for (let i = 0; i < 5; i++) expect((await tryLogin(email, "incorrecta")).status).to.equal(401);

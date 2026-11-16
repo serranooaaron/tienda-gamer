@@ -3,7 +3,7 @@ import Cart from "../models/cart.model.js";
 import User from "../models/user.model.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { COOKIE_NAME, cookieOptions, createHash, isValidPassword, signToken } from "../utils/auth.js";
-import { loginLimiter, waitMessage } from "../utils/loginLimiter.js";
+import { loginLimiter, registerLimiter, waitMessage } from "../utils/loginLimiter.js";
 
 const sessionsRouter = express.Router();
 
@@ -11,6 +11,15 @@ const MIN_PASSWORD_LENGTH = 8;
 
 sessionsRouter.post("/register", async (req, res) => {
   try {
+    const wait = registerLimiter.retryAfter(req);
+    if (wait) {
+      return res
+        .status(429)
+        .set("Retry-After", String(wait))
+        .json({ status: "error", message: waitMessage(wait, "Demasiados registros desde esta conexión") });
+    }
+    registerLimiter.fail(req);
+
     const { first_name, last_name, email, password } = req.body;
 
     if (!first_name || !last_name || !email || !password) {

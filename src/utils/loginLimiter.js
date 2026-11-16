@@ -60,8 +60,12 @@ export const createLoginLimiter = ({ windowMs = 15 * MINUTE, maxPerAccount = 5, 
 
 export const loginLimiter = createLoginLimiter();
 
+// Registro: cada intento cuenta (exitoso o no), hasta 10 cuentas por IP por hora,
+// para que nadie cree cuentas en masa o pruebe qué emails ya están registrados.
+export const registerLimiter = createLoginLimiter({ windowMs: 60 * MINUTE, maxPerAccount: Infinity, maxPerIp: 10 });
+
 // Mensaje para el usuario: "1 minuto" o "N minutos".
-export const waitMessage = (seconds) => {
+export const waitMessage = (seconds, reason = "Demasiados intentos fallidos") => {
   const minutes = Math.max(1, Math.ceil(seconds / 60));
-  return `Demasiados intentos fallidos. Prueba de nuevo en ${minutes} ${minutes === 1 ? "minuto" : "minutos"}.`;
+  return `${reason}. Prueba de nuevo en ${minutes} ${minutes === 1 ? "minuto" : "minutos"}.`;
 };

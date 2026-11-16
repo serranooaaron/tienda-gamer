@@ -10,7 +10,7 @@ import Cart from "../src/models/cart.model.js";
 import Order from "../src/models/order.model.js";
 import Product from "../src/models/product.model.js";
 import User from "../src/models/user.model.js";
-import { loginLimiter } from "../src/utils/loginLimiter.js";
+import { loginLimiter, registerLimiter } from "../src/utils/loginLimiter.js";
 
 process.env.JWT_SECRET = crypto.randomBytes(32).toString("hex");
 // Las imágenes que suben los tests van a una carpeta temporal que se borra al terminar.
@@ -28,6 +28,7 @@ export const mochaHooks = {
   async afterEach() {
     // Todos los tests llegan desde la misma IP: cada uno arranca sin intentos fallidos acumulados.
     loginLimiter.clear();
+    registerLimiter.clear();
     await Promise.all([Product.deleteMany({}), User.deleteMany({}), Cart.deleteMany({}), Order.deleteMany({})]);
   },
   async afterAll() {
