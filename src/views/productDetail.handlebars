@@ -22,7 +22,7 @@
         {{#if (eq stock 0)}}
           <span class="badge badge--out">Sin stock</span>
         {{else if (lte stock 3)}}
-          <span class="badge badge--warn">¡Últimas {{stock}} unidades!</span>
+          <span class="badge badge--warn">{{#if (eq stock 1)}}¡Última unidad!{{else}}¡Últimas {{stock}} unidades!{{/if}}</span>
         {{else}}
           <span class="badge badge--ok">En stock · {{stock}} unidades</span>
         {{/if}}

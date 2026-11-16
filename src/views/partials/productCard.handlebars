@@ -4,7 +4,7 @@
     {{#if (eq stock 0)}}
       <span class="product-card__flag product-card__flag--out">Sin stock</span>
     {{else if (lte stock 3)}}
-      <span class="product-card__flag">Últimas {{stock}}</span>
+      <span class="product-card__flag">{{#if (eq stock 1)}}Última unidad{{else}}Últimas {{stock}}{{/if}}</span>
     {{/if}}
   </a>
   <div class="product-card__body">
