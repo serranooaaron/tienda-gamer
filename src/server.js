@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 import app from "./app.js";
 import connectMongoDB from "./config/db.js";
@@ -15,6 +16,18 @@ const PORT = process.env.PORT || 8081;
 
 await connectMongoDB();
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Servidor iniciado en http://localhost:${PORT}`);
 });
+
+// Apagado ordenado: en cada redeploy la plataforma manda SIGTERM. Se dejan terminar los pedidos
+// en curso y se cierra la conexión a la base antes de salir.
+const shutdown = () => {
+  server.close(async () => {
+    await mongoose.disconnect();
+    process.exit(0);
+  });
+  server.closeIdleConnections();
+};
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
