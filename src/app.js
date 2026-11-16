@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import productsRouter from "./routes/products.route.js";
 import cartRouter from "./routes/carts.route.js";
@@ -8,6 +9,7 @@ import { engine } from "express-handlebars";
 import viewsRouter from "./routes/views.route.js";
 import { attachUser } from "./middlewares/auth.middleware.js";
 import helpers from "./utils/handlebars.js";
+import securityHeaders from "./middlewares/securityHeaders.js";
 import __dirname from "../dirname.js";
 
 // La app solo arma las rutas: conectar la base y abrir el puerto queda en server.js,
@@ -15,6 +17,7 @@ import __dirname from "../dirname.js";
 const app = express();
 
 app.disable("x-powered-by");
+app.use(securityHeaders);
 // Detrás del proxy de la plataforma (Render), req.ip sería siempre la IP del proxy:
 // TRUST_PROXY indica cuántos saltos de proxy creer para leer la IP real del visitante.
 if (process.env.TRUST_PROXY) app.set("trust proxy", Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
@@ -29,6 +32,11 @@ app.set("view engine", "handlebars");
 app.set("views", __dirname + "/src/views");
 
 //endpoints
+// Chequeo de salud para la plataforma de deploy: liviano y sin datos internos.
+app.get("/api/health", (_req, res) => {
+  const ready = mongoose.connection.readyState === 1;
+  res.status(ready ? 200 : 503).json({ status: ready ? "ok" : "unavailable" });
+});
 app.use("/api/sessions", sessionsRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/carts", cartRouter);
