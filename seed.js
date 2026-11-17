@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import __dirname from "./dirname.js";
 import { seedProducts, seedUser } from "./src/data/seeders.js";
 import { dbOptions } from "./src/config/dbOptions.js";
+import { passwordProblem } from "./public/js/passwordPolicy.js";
 
 const envPath = `${__dirname}/.env`;
 dotenv.config({ path: envPath, quiet: true });
@@ -27,7 +28,16 @@ const seed = async () => {
     console.log(`Insertados: ${result.upsertedCount}`);
     console.log(`Actualizados: ${result.modifiedCount}`);
 
-    // El administrador solo se crea si se definen ADMIN_EMAIL y ADMIN_PASSWORD en el .env.
+    // El administrador solo se crea si se definen ADMIN_EMAIL y ADMIN_PASSWORD en el .env,
+    // y con una contraseña que cumpla la misma regla que cualquier cuenta.
+    const adminProblem = process.env.ADMIN_PASSWORD
+      ? passwordProblem(process.env.ADMIN_PASSWORD, { email: process.env.ADMIN_EMAIL, first_name: "Admin", last_name: "Tienda" })
+      : null;
+    if (adminProblem) {
+      console.error(`ADMIN_PASSWORD no es segura: ${adminProblem}. No se creó el administrador.`);
+      process.exitCode = 1;
+      return;
+    }
     const admin = await seedUser({
       email: process.env.ADMIN_EMAIL,
       password: process.env.ADMIN_PASSWORD,

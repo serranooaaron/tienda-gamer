@@ -4,10 +4,9 @@ import User from "../models/user.model.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { COOKIE_NAME, cookieOptions, createHash, isValidPassword, signToken } from "../utils/auth.js";
 import { loginLimiter, registerLimiter, waitMessage } from "../utils/loginLimiter.js";
+import { passwordProblem } from "../../public/js/passwordPolicy.js";
 
 const sessionsRouter = express.Router();
-
-const MIN_PASSWORD_LENGTH = 8;
 
 sessionsRouter.post("/register", async (req, res) => {
   try {
@@ -25,11 +24,10 @@ sessionsRouter.post("/register", async (req, res) => {
     if (!first_name || !last_name || !email || !password) {
       return res.status(400).json({ status: "error", message: "Completa todos los campos" });
     }
-    if (String(password).length < MIN_PASSWORD_LENGTH) {
-      return res.status(400).json({
-        status: "error",
-        message: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres`
-      });
+    // La misma regla que muestra el formulario: el servidor es el que decide.
+    const problem = passwordProblem(String(password), { email, first_name, last_name });
+    if (problem) {
+      return res.status(400).json({ status: "error", message: problem });
     }
 
     const exists = await User.exists({ email: String(email).toLowerCase().trim() });

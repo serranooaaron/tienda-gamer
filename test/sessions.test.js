@@ -44,8 +44,47 @@ describe("Sesiones", () => {
       await request.post("/api/sessions/register").send(incomplete).expect(400);
     });
 
-    it("rechaza contraseñas de menos de 8 caracteres", async () => {
-      await request.post("/api/sessions/register").send(userData({ password: "a".repeat(7) })).expect(400);
+    describe("regla de contraseñas", () => {
+      const register = (password, extra = {}) => request.post("/api/sessions/register").send(userData({ password, ...extra }));
+
+      it("acepta una contraseña con mayúscula, minúscula, número y símbolo", async () => {
+        await register("Teclado#Rojo47").expect(201);
+      });
+
+      it("exige cada requisito y dice qué falta", async () => {
+        const cases = {
+          "Ab1#xyz": "al menos 10 caracteres",
+          "TECLADO#ROJO47": "una letra minúscula",
+          "teclado#rojo47": "una letra mayúscula",
+          "Teclado#RojoAzul": "un número",
+          "TecladoRojo4711": "un símbolo",
+        };
+        for (const [password, missing] of Object.entries(cases)) {
+          const res = await register(password);
+          expect(res.status, password).to.equal(400);
+          expect(res.body.message, password).to.include(missing);
+        }
+      });
+
+      it("rechaza contraseñas comunes aunque lleven números y símbolos", async () => {
+        for (const password of ["P@ssw0rd2024!", "Qwerty#2024x", "Tienda#Gamer1", "Ab#9123456zz", "Kx7#aaaa9Zb"]) {
+          const res = await register(password);
+          expect(res.status, password).to.equal(400);
+          expect(res.body.message, password).to.include("que no sea común");
+        }
+      });
+
+      it("rechaza contraseñas que contienen el nombre o el email", async () => {
+        await register("Marcela#Kx79", { first_name: "Marcela" }).expect(400);
+        await register("Kx79#Gonzalez", { last_name: "González" }).expect(400);
+        await register("Kx79#Jperez22", { email: "jperez@example.com" }).expect(400);
+      });
+
+      it("rechaza contraseñas de más de 72 bytes, que bcrypt cortaría sin avisar", async () => {
+        const res = await register(`Kx7#${"ñ".repeat(40)}`);
+        expect(res.status).to.equal(400);
+        expect(res.body.message).to.include("72 bytes");
+      });
     });
 
     it("rechaza un email inválido", async () => {

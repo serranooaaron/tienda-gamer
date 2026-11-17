@@ -1,4 +1,25 @@
 import { api } from "./app.js";
+import { passwordChecks } from "./passwordPolicy.js";
+
+// Registro: marca cada requisito de la contraseña mientras se escribe.
+const rulesList = document.querySelector("[data-password-rules]");
+if (rulesList) {
+  const form = rulesList.closest("form");
+  const passwordInput = form.querySelector("[data-password]");
+  const update = () => {
+    const person = { email: form.elements.email.value, first_name: form.elements.first_name.value, last_name: form.elements.last_name.value };
+    const checks = passwordChecks(passwordInput.value, person);
+    for (const { id, ok } of checks) {
+      const item = rulesList.querySelector(`[data-rule="${id}"]`);
+      item.classList.toggle("is-ok", ok);
+      item.querySelector("[data-rule-state]").textContent = ok ? ": cumplido" : ": falta";
+    }
+    const missing = checks.filter((check) => !check.ok);
+    passwordInput.setCustomValidity(missing.length ? `La contraseña necesita: ${missing.map((check) => check.label.toLowerCase()).join(", ")}` : "");
+  };
+  form.addEventListener("input", update);
+  update();
+}
 
 // Formularios de login y registro: validan en el navegador, llaman a la API
 // y, si todo sale bien, vuelven a la pagina desde donde se pidio el login.

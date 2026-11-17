@@ -305,6 +305,12 @@ h1, h2 { text-wrap: balance; }
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .input[aria-invalid="true"], .field input[aria-invalid="true"] { border-color: #f87171; }
+/* Requisitos de la contraseña: cada uno pasa de "•" a "✓" al cumplirse (no depende solo del color). */
+.password-rules { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 4px; font-size: 0.82rem; color: var(--muted); }
+.password-rules li { display: flex; align-items: baseline; gap: 8px; }
+.password-rules__icon::before { content: "•"; display: inline-block; width: 1em; text-align: center; font-weight: 800; }
+.password-rules li.is-ok { color: #86efac; }
+.password-rules li.is-ok .password-rules__icon::before { content: "✓"; }
 .form-error { color: #fca5a5; font-size: 0.9rem; min-height: 1.2em; }
 
 /* ===================== Inicio ===================== */

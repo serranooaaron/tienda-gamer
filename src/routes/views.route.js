@@ -11,6 +11,7 @@ import __dirname from "../../dirname.js";
 import { requireAdmin, requireAuth } from "../middlewares/auth.middleware.js";
 import { CATEGORY_LABELS } from "../utils/handlebars.js";
 import { listUploadedImages } from "../utils/uploader.js";
+import { passwordChecks } from "../../public/js/passwordPolicy.js";
 
 const categoryLabel = (value) => CATEGORY_LABELS[value] || value;
 
@@ -269,7 +270,8 @@ const safeNext = (value) =>
 const authPage = (view, title) => (req, res) => {
   const next = safeNext(req.query.next);
   if (req.user) return res.redirect(next);
-  return res.render(view, { title, next });
+  // El registro muestra la lista de requisitos de la contraseña desde el primer momento.
+  return res.render(view, { title, next, passwordRules: passwordChecks("").map(({ id, label }) => ({ id, label })) });
 };
 
 viewsRouter.get("/login", authPage("login", "Ingresar"));

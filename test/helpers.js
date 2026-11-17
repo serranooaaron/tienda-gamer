@@ -7,7 +7,8 @@ import { seedUser } from "../src/data/seeders.js";
 export const request = supertest(app);
 
 // Contraseñas generadas en cada corrida: en el código no queda ninguna fija.
-export const randomPassword = () => crypto.randomBytes(12).toString("hex");
+// Cumplen la regla: mayúscula, minúscula, número y símbolo.
+export const randomPassword = () => `Kx7#${crypto.randomBytes(12).toString("hex")}`;
 
 let counter = 0;
 
