@@ -26,6 +26,7 @@ Parte de la entrega final del curso de Backend (Coderhouse, comisión 86215; los
 **Para administradores** (`/admin`)
 - Resumen del catálogo (productos, unidades, sin stock, pausados)
 - Alta, edición, borrado y pausa de productos
+- Subida de imágenes de productos (PNG, JPG o WebP de hasta 2 MB)
 
 ## Seguridad
 
@@ -38,6 +39,10 @@ Parte de la entrega final del curso de Backend (Coderhouse, comisión 86215; los
 - No se puede agregar más unidades que el stock disponible
 - Búsquedas con texto escapado en `$regex` (evita ReDoS)
 - Mismo mensaje para email inexistente o contraseña incorrecta
+- Límite de intentos: 5 logins fallidos por cuenta y conexión cada 15 minutos, y hasta 10 registros por conexión por hora
+- Operadores de MongoDB enviados por el cliente se toman como texto (`sanitizeFilter`)
+- Cabeceras de seguridad: política de contenido sin scripts en línea, protección contra clickjacking y HSTS en producción
+- Imágenes subidas: solo administradores, nombre generado por el servidor y contenido verificado
 - Redirección tras el login solo a rutas internas
 
 ## Ejecución local
@@ -82,7 +87,21 @@ Cubren sesiones, permisos de administrador, carritos por usuario, compras, lími
 | `JWT_SECRET` | Clave larga y aleatoria para firmar los tokens |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Opcional: cuenta administradora que crea `npm run seed` |
 | `PORT` | Puerto (por defecto 8081) |
-| `NODE_ENV` | `production` activa la cookie `Secure` |
+| `NODE_ENV` | `production` activa la cookie `Secure` y HSTS |
+| `TRUST_PROXY` | Saltos de proxy delante de la app (en Render, `1`) para que el límite de intentos vea la IP real |
+
+## Deploy en Render
+
+El repo trae un [`render.yaml`](render.yaml): en Render, **New > Blueprint** y elegir este repositorio.
+
+1. En MongoDB Atlas, crear un usuario con rol `readWrite` solo sobre la base de esta app y copiar la cadena `mongodb+srv://`.
+2. En Render, cargar ``URI_MONGODB`` con esa cadena (el resto de las variables las define el Blueprint; `JWT_SECRET` se genera solo).
+3. Render usa `/api/health` para saber cuándo la versión nueva está lista.
+
+A tener en cuenta:
+- En el plan gratuito el servicio se duerme tras 15 minutos sin visitas: la primera carga tarda unos segundos.
+- Render no tiene IP fija en ese plan, así que Atlas queda abierto a `0.0.0.0/0`; lo compensa un usuario de mínimo privilegio con contraseña larga.
+- El disco de Render se borra en cada deploy: las imágenes subidas desde el panel no se conservan entre deploys.
 
 ## Vistas
 
@@ -106,7 +125,9 @@ Cubren sesiones, permisos de administrador, carritos por usuario, compras, lími
 | `GET` | `/api/sessions/current` | Con sesión |
 | `GET` | `/api/products` · `/api/products/:pid` | Público |
 | `POST` `PUT` `DELETE` | `/api/products` | Administrador |
+| `POST` | `/api/products/images` (subir una imagen) | Administrador |
 | `POST` | `/api/carts` (devuelve el carrito propio) | Con sesión |
 | `GET` `PUT` `DELETE` | `/api/carts/:cid` y `/api/carts/:cid/products/:pid` | Dueño del carrito |
 | `POST` `GET` | `/api/orders` (compra el carrito propio; lista las compras propias) | Con sesión |
 | `GET` | `/api/orders/:oid` | Dueño de la compra o administrador |
+| `GET` | `/api/health` | Público |

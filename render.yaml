@@ -1,0 +1,23 @@
+# Deploy en Render (Blueprint): Render > New > Blueprint > este repo.
+# Las variables marcadas con sync: false se cargan a mano en el panel y nunca quedan en el repo.
+services:
+  - type: web
+    name: tienda-gamer
+    runtime: node
+    plan: free
+    # La versión de Node sale de .node-version.
+    buildCommand: npm ci --omit=dev
+    startCommand: node index.js
+    # Render no manda tráfico a una versión nueva hasta que esta ruta responda 200.
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render pone un proxy delante: sin esto todos los visitantes comparten la IP del proxy
+      # y el límite de intentos de login los bloquearía juntos.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: URI_MONGODB
+        sync: false
