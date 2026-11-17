@@ -4,11 +4,15 @@ import Product from "../models/product.model.js";
 import { requireAdmin } from "../middlewares/auth.middleware.js";
 import { escapeRegex } from "../utils/regex.js";
 import { uploadProductImage } from "../utils/uploader.js";
+import { ProductInputError, pickProductFields } from "../utils/productInput.js";
 
 const productsRouter = express.Router();
 
 // Traduce errores de Mongoose a respuestas claras en lugar de un 500 generico.
 const productErrorResponse = (res, error, fallbackMessage) => {
+  if (error instanceof ProductInputError) {
+    return res.status(400).json({ status: "error", message: error.message });
+  }
   if (error.name === "ValidationError" || error.name === "CastError") {
     return res.status(400).json({ status: "error", message: "Datos del producto invalidos" });
   }
@@ -62,9 +66,7 @@ productsRouter.post("/images", requireAdmin, uploadProductImage, (req, res) => {
 
 productsRouter.post("/", requireAdmin, async (req, res) => {
   try {
-    const newProduct = req.body;
-
-    const product = await Product.create(newProduct);
+    const product = await Product.create(pickProductFields(req.body));
     res.status(201).json({ status: "success", payload: product });
   } catch (error) {
     productErrorResponse(res, error, "Error al agregar un producto");
@@ -156,15 +158,18 @@ productsRouter.get("/:pid", async (req, res) => {
 productsRouter.put("/:pid", requireAdmin, async (req, res) => {
   try {
     const pid = req.params.pid;
-    const updateData = req.body;
-
     if (!mongoose.Types.ObjectId.isValid(pid)) {
       return res
         .status(400)
         .json({ status: "error", message: "Id de producto invalido" });
     }
 
-    const updatedProduct = await Product.findByIdAndUpdate(pid, updateData, {
+    const updateData = pickProductFields(req.body);
+    if (!Object.keys(updateData).length) {
+      return res.status(400).json({ status: "error", message: "No hay datos para actualizar" });
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(pid, { $set: updateData }, {
       returnDocument: "after",
       runValidators: true,
     });

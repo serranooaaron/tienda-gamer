@@ -95,6 +95,56 @@ describe("Productos", () => {
     });
   });
 
+  describe("solo se guardan los campos esperados", () => {
+    it("un alta ignora _id, fechas y campos inventados", async () => {
+      const { agent } = await loginAs("admin");
+      const forgedId = new mongoose.Types.ObjectId();
+      const res = await agent
+        .post("/api/products")
+        .send({ ...productData(), _id: forgedId, createdAt: "2000-01-01", featured: true, rating: 5 })
+        .expect(201);
+
+      const stored = await Product.findById(res.body.payload._id).lean();
+      expect(String(stored._id)).to.not.equal(String(forgedId));
+      expect(stored).to.not.have.property("featured");
+      expect(stored).to.not.have.property("rating");
+      expect(new Date(stored.createdAt).getFullYear()).to.be.at.least(2026);
+    });
+
+    it("una edición no acepta operadores de MongoDB ni cambia el _id", async () => {
+      const { agent } = await loginAs("admin");
+      const product = await createProduct({ title: "Mouse inalámbrico", price: 100 });
+
+      const res = await agent
+        .put(`/api/products/${product._id}`)
+        .send({ $unset: { title: 1 }, _id: new mongoose.Types.ObjectId(), price: 150 })
+        .expect(200);
+
+      expect(String(res.body.payload._id)).to.equal(String(product._id));
+      expect(res.body.payload.title).to.equal("Mouse inalámbrico");
+      expect(res.body.payload.price).to.equal(150);
+    });
+
+    it("rechaza tipos incorrectos y una edición sin datos", async () => {
+      const { agent } = await loginAs("admin");
+      const product = await createProduct();
+      await agent.put(`/api/products/${product._id}`).send({ price: { $gt: 0 } }).expect(400);
+      await agent.put(`/api/products/${product._id}`).send({ title: ["a", "b"] }).expect(400);
+      await agent.put(`/api/products/${product._id}`).send({ status: "si" }).expect(400);
+      await agent.put(`/api/products/${product._id}`).send({ featured: true }).expect(400);
+    });
+
+    it("solo acepta imágenes de la tienda o https", async () => {
+      const { agent } = await loginAs("admin");
+      const product = await createProduct();
+      for (const thumbnail of ["javascript:alert(1)", "data:image/png;base64,AAAA", "http://ejemplo.com/a.png", "/image/../../.env\""]) {
+        await agent.put(`/api/products/${product._id}`).send({ thumbnail }).expect(400);
+      }
+      await agent.put(`/api/products/${product._id}`).send({ thumbnail: "/image/uploads/123-abc.png" }).expect(200);
+      await agent.put(`/api/products/${product._id}`).send({ thumbnail: "https://cdn.ejemplo.com/mouse.webp" }).expect(200);
+    });
+  });
+
   describe("PUT /api/products/:pid", () => {
     it("solo permite editar a administradores", async () => {
       const product = await createProduct();
