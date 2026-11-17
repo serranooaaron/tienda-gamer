@@ -1,6 +1,7 @@
 import express from "express";
 import Cart from "../models/cart.model.js";
 import User from "../models/user.model.js";
+import RevokedToken from "../models/revokedToken.model.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { COOKIE_NAME, cookieOptions, createHash, isValidPassword, signToken } from "../utils/auth.js";
 import { loginLimiter, registerLimiter, waitMessage } from "../utils/loginLimiter.js";
@@ -89,9 +90,21 @@ sessionsRouter.post("/login", async (req, res) => {
   }
 });
 
-sessionsRouter.post("/logout", (_req, res) => {
-  res.clearCookie(COOKIE_NAME, { ...cookieOptions(), maxAge: undefined });
-  return res.json({ status: "success", message: "Sesion cerrada" });
+// Cerrar sesión revoca el token: aunque alguien se haya copiado la cookie, deja de servir.
+sessionsRouter.post("/logout", async (req, res) => {
+  try {
+    if (req.user?.jti && req.user.exp) {
+      await RevokedToken.updateOne(
+        { jti: req.user.jti },
+        { $setOnInsert: { jti: req.user.jti, expiresAt: new Date(req.user.exp * 1000) } },
+        { upsert: true },
+      );
+    }
+    res.clearCookie(COOKIE_NAME, { ...cookieOptions(), maxAge: undefined });
+    return res.json({ status: "success", message: "Sesion cerrada" });
+  } catch (error) {
+    return res.status(500).json({ status: "error", message: "No fue posible cerrar la sesión" });
+  }
 });
 
 sessionsRouter.get("/current", requireAuth, (req, res) => {

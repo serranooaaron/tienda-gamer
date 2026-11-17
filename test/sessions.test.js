@@ -5,6 +5,7 @@ import Cart from "../src/models/cart.model.js";
 import User from "../src/models/user.model.js";
 import { loginAs, randomPassword, request, userData } from "./helpers.js";
 import { createLoginLimiter } from "../src/utils/loginLimiter.js";
+import RevokedToken from "../src/models/revokedToken.model.js";
 
 describe("Sesiones", () => {
   describe("POST /api/sessions/register", () => {
@@ -217,6 +218,38 @@ describe("Sesiones", () => {
       const { agent } = await loginAs();
       await agent.post("/api/sessions/logout").expect(200);
       await agent.get("/api/sessions/current").expect(401);
+    });
+
+    it("el token deja de servir aunque alguien se haya copiado la cookie", async () => {
+      const { email, password } = await loginAs();
+      const login = await request.post("/api/sessions/login").send({ email, password }).expect(200);
+      const copiedCookie = login.headers["set-cookie"][0].split(";")[0];
+
+      await request.get("/api/sessions/current").set("Cookie", copiedCookie).expect(200);
+      await request.post("/api/sessions/logout").set("Cookie", copiedCookie).expect(200);
+
+      await request.get("/api/sessions/current").set("Cookie", copiedCookie).expect(401);
+      const page = await request.get("/cart").set("Cookie", copiedCookie);
+      expect(page.status).to.equal(302);
+      expect(page.headers.location).to.match(/^\/login/);
+    });
+
+    it("cerrar una sesión no cierra las otras del mismo usuario", async () => {
+      const { email, password } = await loginAs();
+      const phone = supertest.agent(app);
+      const laptop = supertest.agent(app);
+      await phone.post("/api/sessions/login").send({ email, password }).expect(200);
+      await laptop.post("/api/sessions/login").send({ email, password }).expect(200);
+
+      await phone.post("/api/sessions/logout").expect(200);
+
+      await laptop.get("/api/sessions/current").expect(200);
+    });
+
+    it("el registro de una sesión cerrada se borra solo cuando el token vence", async () => {
+      const indexes = await RevokedToken.collection.indexes();
+      const ttl = indexes.find((index) => index.key.expiresAt === 1);
+      expect(ttl.expireAfterSeconds).to.equal(0);
     });
 
     it("no falla si no había sesión", async () => {

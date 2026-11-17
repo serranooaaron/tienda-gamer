@@ -10,6 +10,7 @@ import Cart from "../src/models/cart.model.js";
 import Order from "../src/models/order.model.js";
 import Product from "../src/models/product.model.js";
 import User from "../src/models/user.model.js";
+import RevokedToken from "../src/models/revokedToken.model.js";
 import { loginLimiter, registerLimiter } from "../src/utils/loginLimiter.js";
 
 process.env.JWT_SECRET = crypto.randomBytes(32).toString("hex");
@@ -23,13 +24,13 @@ export const mochaHooks = {
     mongod = await MongoMemoryServer.create();
     await mongoose.connect(mongod.getUri("tienda-test"));
     // Espera los índices únicos: sin esto, los tests de duplicados podrían pasar de largo.
-    await Promise.all([Product.init(), User.init(), Cart.init(), Order.init()]);
+    await Promise.all([Product.init(), User.init(), Cart.init(), Order.init(), RevokedToken.init()]);
   },
   async afterEach() {
     // Todos los tests llegan desde la misma IP: cada uno arranca sin intentos fallidos acumulados.
     loginLimiter.clear();
     registerLimiter.clear();
-    await Promise.all([Product.deleteMany({}), User.deleteMany({}), Cart.deleteMany({}), Order.deleteMany({})]);
+    await Promise.all([Product.deleteMany({}), User.deleteMany({}), Cart.deleteMany({}), Order.deleteMany({}), RevokedToken.deleteMany({})]);
   },
   async afterAll() {
     await mongoose.disconnect();

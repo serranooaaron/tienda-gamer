@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -25,7 +26,8 @@ export const signToken = (user) =>
       cart: user.cart?.toString()
     },
     getJwtSecret(),
-    { expiresIn: TOKEN_TTL_SECONDS }
+    // jwtid: identificador único de esta sesión, para poder revocarla al cerrar sesión.
+    { expiresIn: TOKEN_TTL_SECONDS, jwtid: crypto.randomUUID() }
   );
 
 export const verifyToken = (token) => jwt.verify(token, getJwtSecret());

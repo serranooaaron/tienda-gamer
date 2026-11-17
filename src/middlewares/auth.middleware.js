@@ -1,18 +1,31 @@
 import { COOKIE_NAME, verifyToken } from "../utils/auth.js";
+import RevokedToken from "../models/revokedToken.model.js";
+
+const readToken = (token) => {
+  try {
+    return verifyToken(token);
+  } catch {
+    return null;
+  }
+};
 
 // Lee la cookie en cada request y deja el usuario disponible para rutas y vistas.
-export const attachUser = (req, res, next) => {
-  const token = req.cookies?.[COOKIE_NAME];
-  if (token) {
-    try {
-      req.user = verifyToken(token);
-    } catch {
-      res.clearCookie(COOKIE_NAME);
+// Un token vencido, alterado o de una sesión ya cerrada no cuenta como sesión.
+export const attachUser = async (req, res, next) => {
+  try {
+    const token = req.cookies?.[COOKIE_NAME];
+    if (token) {
+      const payload = readToken(token);
+      const revoked = payload?.jti ? await RevokedToken.exists({ jti: payload.jti }) : false;
+      if (payload && !revoked) req.user = payload;
+      else res.clearCookie(COOKIE_NAME);
     }
+    res.locals.user = req.user || null;
+    res.locals.isAdmin = req.user?.role === "admin";
+    next();
+  } catch (error) {
+    next(error);
   }
-  res.locals.user = req.user || null;
-  res.locals.isAdmin = req.user?.role === "admin";
-  next();
 };
 
 const wantsHtml = (req) => !req.originalUrl.startsWith("/api/");
