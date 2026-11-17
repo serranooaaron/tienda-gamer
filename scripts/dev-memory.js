@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { seedProducts, seedUser } from "../src/data/seeders.js";
+import { dbOptions } from "../src/config/dbOptions.js";
 
 // Cuentas de prueba: existen solo en la base en memoria, nunca en Atlas.
 // La contraseña se genera en cada arranque y se muestra por consola.
@@ -15,10 +16,10 @@ const DEV_ACCOUNTS = [
 ];
 
 const mongod = await MongoMemoryServer.create();
-process.env.URI_MONGODB = mongod.getUri("tienda");
+process.env.URI_MONGODB = mongod.getUri();
 process.env.JWT_SECRET ||= crypto.randomBytes(32).toString("hex");
 
-await mongoose.connect(process.env.URI_MONGODB);
+await mongoose.connect(process.env.URI_MONGODB, dbOptions());
 await seedProducts();
 for (const account of DEV_ACCOUNTS) await seedUser(account);
 await mongoose.disconnect();

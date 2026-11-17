@@ -2,13 +2,14 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import __dirname from "./dirname.js";
 import { seedProducts, seedUser } from "./src/data/seeders.js";
+import { dbOptions } from "./src/config/dbOptions.js";
 
 dotenv.config({ path: `${__dirname}/.env`, quiet: true });
 
 const seed = async () => {
   try {
-    await mongoose.connect(process.env.URI_MONGODB);
-    console.log("Conectado a MongoDB");
+    await mongoose.connect(process.env.URI_MONGODB, dbOptions());
+    console.log(`Conectado a MongoDB (base ${mongoose.connection.name})`);
 
     const result = await seedProducts();
     console.log("Seed de productos ejecutado correctamente");

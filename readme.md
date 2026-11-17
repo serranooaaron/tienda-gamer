@@ -83,7 +83,8 @@ Cubren sesiones, permisos de administrador, carritos por usuario, compras, lími
 
 | Variable | Descripción |
 |---|---|
-| `URI_MONGODB` | Cadena de conexión de MongoDB (usa una base propia, ej. `/tienda-gamer`) |
+| `URI_MONGODB` | Cadena de conexión de MongoDB; puede ser la que copia Atlas, sin nombre de base |
+| `DB_NAME` | Opcional: nombre de la base (por defecto `tienda-gamer`). Así varias apps pueden compartir el mismo clúster sin mezclar datos |
 | `JWT_SECRET` | Clave larga y aleatoria para firmar los tokens |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Opcional: cuenta administradora que crea `npm run seed` |
 | `PORT` | Puerto (por defecto 8081) |
@@ -94,9 +95,10 @@ Cubren sesiones, permisos de administrador, carritos por usuario, compras, lími
 
 El repo trae un [`render.yaml`](render.yaml): en Render, **New > Blueprint** y elegir este repositorio.
 
-1. En MongoDB Atlas, crear un usuario con rol `readWrite` solo sobre la base de esta app y copiar la cadena `mongodb+srv://`.
-2. En Render, cargar ``URI_MONGODB`` con esa cadena (el resto de las variables las define el Blueprint; `JWT_SECRET` se genera solo).
-3. Render usa `/api/health` para saber cuándo la versión nueva está lista.
+1. En MongoDB Atlas, crear un usuario con rol `readWrite` solo sobre la base `tienda-gamer` y copiar la cadena `mongodb+srv://`.
+2. Varias apps pueden usar el mismo clúster: cada una guarda en su propia base (`tienda-gamer` en esta).
+3. En Render, cargar `URI_MONGODB` con esa cadena (el resto de las variables las define el Blueprint; `JWT_SECRET` se genera solo).
+4. Render usa `/api/health` para saber cuándo la versión nueva está lista.
 
 A tener en cuenta:
 - En el plan gratuito el servicio se duerme tras 15 minutos sin visitas: la primera carga tarda unos segundos.
