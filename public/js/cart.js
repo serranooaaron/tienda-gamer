@@ -1,4 +1,4 @@
-import { api, countItems, formatMoney, setCartCount, toast } from "./app.js";
+import { api, confirmDialog, countItems, formatMoney, setCartCount, toast } from "./app.js";
 
 const cartEl = document.querySelector("[data-cart]");
 const cid = cartEl?.dataset.cart;
@@ -36,7 +36,7 @@ const withBusy = async (element, action) => {
   }
 };
 
-cartEl?.addEventListener("click", (event) => {
+cartEl?.addEventListener("click", async (event) => {
   const row = event.target.closest("[data-item]");
   const pid = row?.dataset.item;
 
@@ -61,7 +61,7 @@ cartEl?.addEventListener("click", (event) => {
 
   const emptyButton = event.target.closest("[data-empty-cart]");
   if (emptyButton) {
-    if (!confirm("¿Vaciar todo el carrito?")) return;
+    if (!(await confirmDialog("¿Vaciar todo el carrito?", { confirmLabel: "Vaciar carrito", danger: true }))) return;
     return withBusy(emptyButton, async () => {
       const { payload } = await api(`/api/carts/${cid}`, { method: "DELETE" });
       render(payload);

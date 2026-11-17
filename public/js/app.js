@@ -14,8 +14,55 @@ export const toast = (message, { type = "ok", action } = {}) => {
     el.append(link);
   }
   container.append(el);
-  setTimeout(() => el.remove(), 3500);
+  // Los errores quedan más tiempo: hay que alcanzar a leerlos.
+  setTimeout(() => el.remove(), type === "error" ? 7000 : 4000);
 };
+
+// Diálogo de confirmación propio (reemplaza a confirm() del navegador): se cierra con Escape,
+// con "Cancelar" o tocando fuera, y devuelve true solo si se confirma.
+export const confirmDialog = (message, { confirmLabel = "Confirmar", cancelLabel = "Cancelar", danger = false } = {}) =>
+  new Promise((resolve) => {
+    const dialog = document.createElement("dialog");
+    dialog.className = "modal confirm";
+    dialog.setAttribute("aria-labelledby", "confirm-message");
+
+    const text = document.createElement("p");
+    text.id = "confirm-message";
+    text.className = "confirm__message";
+    text.textContent = message;
+
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "btn btn--ghost";
+    cancel.textContent = cancelLabel;
+
+    const accept = document.createElement("button");
+    accept.type = "button";
+    accept.className = `btn ${danger ? "btn--danger" : "btn--primary"}`;
+    accept.textContent = confirmLabel;
+
+    const actions = document.createElement("div");
+    actions.className = "modal__foot";
+    actions.append(cancel, accept);
+    dialog.append(text, actions);
+    document.body.append(dialog);
+
+    const opener = document.activeElement;
+    const close = (result) => {
+      dialog.close();
+      dialog.remove();
+      opener?.focus?.();
+      resolve(result);
+    };
+    cancel.addEventListener("click", () => close(false));
+    accept.addEventListener("click", () => close(true));
+    dialog.addEventListener("cancel", (event) => { event.preventDefault(); close(false); });
+    dialog.addEventListener("click", (event) => { if (event.target === dialog) close(false); });
+
+    dialog.showModal();
+    // En acciones que no se pueden deshacer el foco arranca en "Cancelar".
+    (danger ? cancel : accept).focus();
+  });
 
 // fetch a la API con JSON o FormData (archivos); lanza un Error con el mensaje del servidor si falla.
 export const api = async (url, { method = "GET", body } = {}) => {

@@ -1,4 +1,4 @@
-import { api, toast } from "./app.js";
+import { api, confirmDialog, toast } from "./app.js";
 
 const dialog = document.getElementById("product-dialog");
 const form = document.getElementById("product-form");
@@ -122,7 +122,7 @@ document.querySelector(".table").addEventListener("click", async (event) => {
 
   if (target.closest("[data-delete]")) {
     const product = rowProduct(target);
-    if (!confirm(`¿Borrar "${product.title}"? Esta acción no se puede deshacer.`)) return;
+    if (!(await confirmDialog(`¿Borrar "${product.title}"? Esta acción no se puede deshacer.`, { confirmLabel: "Borrar", danger: true }))) return;
     try {
       await api(`/api/products/${product._id}`, { method: "DELETE" });
       reloadWith("Producto borrado");

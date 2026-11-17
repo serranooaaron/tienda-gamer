@@ -8,7 +8,7 @@
     <section class="cart__items" aria-label="Productos en el carrito">
       {{#each items}}
         <article class="cart-item" data-item="{{product._id}}" data-price="{{product.price}}" data-stock="{{product.stock}}">
-          <a class="cart-item__media" href="/products/{{product._id}}">
+          <a class="cart-item__media" href="/products/{{product._id}}" tabindex="-1" aria-hidden="true">
             <img src="{{product.thumbnail}}" alt="" />
           </a>
           <div class="cart-item__info">

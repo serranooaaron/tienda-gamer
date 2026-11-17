@@ -10,6 +10,12 @@
   --muted: #9aa1ae;
   --accent: #ef3b3b;
   --accent-2: #ff6a3d;
+  /* Fondos con texto blanco encima: 4.5:1 o más (el rojo y naranja claros no llegan). */
+  --accent-strong: #c81e1e;
+  --accent-strong-2: #c2410c;
+  /* Bordes de campos de formulario: 3:1 contra el fondo (WCAG 1.4.11). */
+  --border-strong: #636b7c;
+  --focus: #8ab4ff;
   --accent-soft: rgb(239 59 59 / 0.14);
   --ok: #22c55e;
   --warn: #f59e0b;
@@ -81,7 +87,7 @@ main { flex: 1; padding-bottom: 64px; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 .btn--primary {
   border-color: transparent;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background: linear-gradient(135deg, var(--accent-strong), var(--accent-strong-2));
   box-shadow: 0 8px 22px rgb(239 59 59 / 0.3);
 }
 .btn--ghost { background: transparent; }
@@ -139,7 +145,7 @@ main { flex: 1; padding-bottom: 64px; }
   height: 20px;
   padding: 0 6px;
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--accent-strong);
   color: #fff;
   font-size: 0.72rem;
   font-weight: 800;
@@ -235,6 +241,21 @@ main { flex: 1; padding-bottom: 64px; }
 
 .eyebrow { color: var(--accent-2); font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; font-size: 0.78rem; }
 
+/* ===================== Accesibilidad ===================== */
+/* Foco visible y parejo para quien navega con teclado. */
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+.btn:focus-visible { border-radius: 999px; }
+.btn--icon:focus-visible { border-radius: 12px; }
+/* Primer elemento de la página: aparece al enfocarlo con Tab y lleva directo al contenido. */
+.skip-link { position: absolute; left: 12px; top: -60px; z-index: 100; padding: 10px 16px; border-radius: 10px; background: var(--text); color: var(--bg); font-weight: 700; transition: top 0.15s; }
+.skip-link:focus { top: 12px; }
+#contenido:focus { outline: none; }
+/* Los enlaces a una sección no quedan tapados por el encabezado fijo. */
+[id] { scroll-margin-top: 88px; }
+::selection { background: var(--accent-strong); color: #fff; }
+input, select, textarea { accent-color: var(--accent); }
+h1, h2 { text-wrap: balance; }
+
 .empty-state {
   grid-column: 1 / -1;
   text-align: center;
@@ -273,17 +294,17 @@ main { flex: 1; padding-bottom: 64px; }
   width: 100%;
   padding: 11px 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   background: var(--bg-2);
   color: var(--text);
   font: inherit;
 }
 .field textarea { resize: vertical; min-height: 96px; }
 .input:focus, .field input:focus, .field select:focus, .field textarea:focus {
-  outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
+.input[aria-invalid="true"], .field input[aria-invalid="true"] { border-color: #f87171; }
 .form-error { color: #fca5a5; font-size: 0.9rem; min-height: 1.2em; }
 
 /* ===================== Inicio ===================== */
@@ -379,7 +400,7 @@ main { flex: 1; padding-bottom: 64px; }
 }
 .chip small { color: var(--muted); opacity: 0.8; }
 .chip:hover { color: var(--text); }
-.chip--active { color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.chip--active { color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--accent-strong), var(--accent-strong-2)); }
 .chip--active small { color: #fff; }
 
 .toolbar {
@@ -456,10 +477,11 @@ main { flex: 1; padding-bottom: 64px; }
   font-weight: 700;
 }
 .pagination__link:hover { border-color: var(--accent); }
-.pagination__link--active { border-color: transparent; background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.pagination__link--active { border-color: transparent; background: linear-gradient(135deg, var(--accent-strong), var(--accent-strong-2)); }
 
 /* ===================== Detalle ===================== */
 .breadcrumb { display: flex; flex-wrap: wrap; gap: 8px; padding: 28px 0 20px; color: var(--muted); font-size: 0.9rem; }
+.breadcrumb a { display: inline-block; padding: 3px 0; }
 .breadcrumb a:hover { color: var(--text); }
 .breadcrumb span:last-child { color: var(--text); }
 
@@ -635,6 +657,10 @@ main { flex: 1; padding-bottom: 64px; }
 .modal__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .field--wide { grid-column: 1 / -1; }
 .modal__foot { display: flex; justify-content: flex-end; gap: 10px; }
+.confirm { width: min(420px, calc(100vw - 32px)); padding: 22px; }
+.confirm__message { font-size: 1.05rem; margin-bottom: 20px; overflow-wrap: anywhere; }
+.confirm .modal__foot { flex-wrap: wrap; }
+.confirm[open] { animation: toast-in 0.2s ease; }
 .thumb-picker { display: flex; align-items: center; gap: 12px; }
 .thumb-picker img { width: 64px; height: 64px; object-fit: contain; border-radius: 12px; background: #eef0f4; padding: 6px; flex-shrink: 0; }
 .thumb-picker select { flex: 1; }
