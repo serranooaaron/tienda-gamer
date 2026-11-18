@@ -10,7 +10,15 @@ export const request = supertest(app);
 // Cumplen la regla (mayúscula, minúscula, número y símbolo) y usan un alfabeto sin vocales
 // ni números que se lean como letras: nunca forman por casualidad una palabra débil o un nombre.
 const ALPHABET = "ghjkmnpqrvwxyz2689";
-export const randomPassword = () => `Kq9#${Array.from(crypto.randomBytes(16), (byte) => ALPHABET[byte % ALPHABET.length]).join("")}`;
+// Nunca repite el carácter anterior: cuatro iguales seguidos cuentan como contraseña débil.
+export const randomPassword = () => {
+  let tail = "";
+  for (const byte of crypto.randomBytes(16)) {
+    const options = ALPHABET.replace(tail.at(-1) ?? "", "");
+    tail += options[byte % options.length];
+  }
+  return `Kq9#${tail}`;
+};
 
 let counter = 0;
 
