@@ -101,12 +101,12 @@ describe("Productos", () => {
       const forgedId = new mongoose.Types.ObjectId();
       const res = await agent
         .post("/api/products")
-        .send({ ...productData(), _id: forgedId, createdAt: "2000-01-01", featured: true, rating: 5 })
+        .send({ ...productData(), _id: forgedId, createdAt: "2000-01-01", promoted: true, rating: 5 })
         .expect(201);
 
       const stored = await Product.findById(res.body.payload._id).lean();
       expect(String(stored._id)).to.not.equal(String(forgedId));
-      expect(stored).to.not.have.property("featured");
+      expect(stored).to.not.have.property("promoted");
       expect(stored).to.not.have.property("rating");
       expect(new Date(stored.createdAt).getFullYear()).to.be.at.least(2026);
     });
@@ -131,7 +131,7 @@ describe("Productos", () => {
       await agent.put(`/api/products/${product._id}`).send({ price: { $gt: 0 } }).expect(400);
       await agent.put(`/api/products/${product._id}`).send({ title: ["a", "b"] }).expect(400);
       await agent.put(`/api/products/${product._id}`).send({ status: "si" }).expect(400);
-      await agent.put(`/api/products/${product._id}`).send({ featured: true }).expect(400);
+      await agent.put(`/api/products/${product._id}`).send({ promoted: true }).expect(400);
     });
 
     it("solo acepta imágenes de la tienda o https", async () => {

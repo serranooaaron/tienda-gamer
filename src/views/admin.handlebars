@@ -12,6 +12,7 @@
     <div class="stat"><span>Unidades en stock</span><strong>{{stats.units}}</strong></div>
     <div class="stat"><span>Sin stock</span><strong>{{stats.outOfStock}}</strong></div>
     <div class="stat"><span>Pausados</span><strong>{{stats.paused}}</strong></div>
+    <div class="stat"><span>Vistas totales</span><strong>{{stats.views}}</strong></div>
   </section>
 
   <form class="toolbar" method="GET" action="/admin" role="search">
@@ -31,6 +32,7 @@
           <th scope="col">Categoría</th>
           <th scope="col" class="num">Precio</th>
           <th scope="col" class="num">Stock</th>
+          <th scope="col" class="num">Vistas</th>
           <th scope="col">Estado</th>
           <th scope="col"><span class="sr-only">Acciones</span></th>
         </tr>
@@ -43,7 +45,7 @@
                 <img src="{{thumbnail}}" alt="" />
                 <div>
                   <strong>{{title}}</strong>
-                  <small>{{code}}</small>
+                  <small>{{code}}{{#if featured}} · <span class="badge badge--featured">Destacado en el inicio</span>{{/if}}</small>
                 </div>
               </div>
             </td>
@@ -52,6 +54,7 @@
             <td class="num">
               {{#if (eq stock 0)}}<span class="badge badge--out">0</span>{{else if (lte stock 3)}}<span class="badge badge--warn">{{stock}}</span>{{else}}{{stock}}{{/if}}
             </td>
+            <td class="num">{{views}}</td>
             <td>
               <button class="badge badge-toggle {{#if status}}badge--ok{{/if}}" type="button" data-toggle-status title="Cambiar estado">
                 {{#if status}}Publicado{{else}}Pausado{{/if}}
@@ -66,7 +69,7 @@
             </td>
           </tr>
         {{else}}
-          <tr><td colspan="6"><div class="empty-state"><h3>No hay productos</h3><p>Crea el primero con “Nuevo producto”.</p></div></td></tr>
+          <tr><td colspan="7"><div class="empty-state"><h3>No hay productos</h3><p>Crea el primero con “Nuevo producto”.</p></div></td></tr>
         {{/each}}
       </tbody>
     </table>
@@ -125,6 +128,11 @@
         <input type="checkbox" name="status" checked />
         Publicado (visible en la tienda)
       </label>
+      <label class="check field--wide">
+        <input type="checkbox" name="featured" aria-describedby="f-featured-hint" />
+        Destacar en el inicio
+      </label>
+      <p class="field__hint field--wide" id="f-featured-hint">Se muestra en la imagen grande del inicio y reemplaza al destacado actual. Si no hay ninguno, va el más visto.</p>
     </div>
 
     <p class="form-error" data-form-error role="alert"></p>

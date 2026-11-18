@@ -22,6 +22,10 @@ const productErrorResponse = (res, error, fallbackMessage) => {
   return res.status(500).json({ status: "error", message: fallbackMessage });
 };
 
+// Un solo producto destacado a la vez: al elegir uno nuevo se desmarca el anterior.
+const keepOnlyFeatured = (productId) =>
+  Product.updateMany({ _id: mongoose.trusted({ $ne: productId }), featured: true }, { $set: { featured: false } });
+
 const parsePositiveInt = (value, fallback) => {
   const parsed = Number.parseInt(value, 10);
   if (Number.isNaN(parsed) || parsed <= 0) return fallback;
@@ -67,6 +71,7 @@ productsRouter.post("/images", requireAdmin, uploadProductImage, (req, res) => {
 productsRouter.post("/", requireAdmin, async (req, res) => {
   try {
     const product = await Product.create(pickProductFields(req.body));
+    if (product.featured) await keepOnlyFeatured(product._id);
     res.status(201).json({ status: "success", payload: product });
   } catch (error) {
     productErrorResponse(res, error, "Error al agregar un producto");
@@ -86,7 +91,8 @@ productsRouter.get("/", async (req, res) => {
     const options = {
       limit,
       page,
-      select: "-__v -createdAt -updatedAt",
+      // Las vistas son un dato del negocio: se ven en el panel, no en la API pública.
+      select: "-__v -createdAt -updatedAt -views",
     };
 
     // El ordenamiento es opcional; si no llega sort se conserva el orden natural.
@@ -140,7 +146,7 @@ productsRouter.get("/:pid", async (req, res) => {
         .json({ status: "error", message: "Id de producto invalido" });
     }
 
-    const product = await Product.findById(pid);
+    const product = await Product.findById(pid).select("-views");
     if (!product)
       return res
         .status(404)
@@ -177,6 +183,7 @@ productsRouter.put("/:pid", requireAdmin, async (req, res) => {
       return res
         .status(404)
         .json({ status: "error", message: "Producto no encontrado" });
+    if (updateData.featured === true) await keepOnlyFeatured(updatedProduct._id);
 
     res.status(200).json({ status: "success", payload: updatedProduct });
   } catch (error) {

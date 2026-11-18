@@ -10,12 +10,12 @@
           {{#unless user}}<a class="btn" href="/register">Crear cuenta</a>{{/unless}}
         </div>
       </div>
-      {{#if featured.[0]}}
-        <a class="hero__showcase" href="/products/{{featured.[0]._id}}">
-          <img src="{{featured.[0].thumbnail}}" alt="{{featured.[0].title}}" />
+      {{#if hero}}
+        <a class="hero__showcase" href="/products/{{hero._id}}">
+          <img src="{{hero.thumbnail}}" alt="{{hero.title}}" />
           <span class="hero__showcase-tag">
-            <strong>{{featured.[0].title}}</strong>
-            {{money featured.[0].price}}
+            <strong>{{hero.title}}</strong>
+            {{money hero.price}}
           </span>
         </a>
       {{/if}}

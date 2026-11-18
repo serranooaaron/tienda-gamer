@@ -72,6 +72,7 @@ const openForm = (product) => {
       if (form.elements[name]) form.elements[name].value = product[name] ?? "";
     }
     form.elements.status.checked = product.status;
+    form.elements.featured.checked = Boolean(product.featured);
   }
   updatePreview();
   dialog.showModal();
@@ -99,6 +100,7 @@ form.addEventListener("submit", async (event) => {
     price: Number(data.price),
     stock: Number(data.stock),
     status: form.elements.status.checked,
+    featured: form.elements.featured.checked,
   };
 
   const submit = form.querySelector('[type="submit"]');

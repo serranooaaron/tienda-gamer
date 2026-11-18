@@ -21,9 +21,10 @@ export const pickProductFields = (body = {}) => {
     if (typeof value !== "number" || !Number.isFinite(value)) throw new ProductInputError(`El campo ${field} debe ser un número`);
     data[field] = value;
   }
-  if (body.status !== undefined) {
-    if (typeof body.status !== "boolean") throw new ProductInputError("El campo status debe ser verdadero o falso");
-    data.status = body.status;
+  for (const field of ["status", "featured"]) {
+    if (body[field] === undefined) continue;
+    if (typeof body[field] !== "boolean") throw new ProductInputError(`El campo ${field} debe ser verdadero o falso`);
+    data[field] = body[field];
   }
   if (body.thumbnail !== undefined) {
     const thumbnail = typeof body.thumbnail === "string" ? body.thumbnail.trim() : "";

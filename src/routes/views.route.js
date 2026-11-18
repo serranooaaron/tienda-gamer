@@ -47,6 +47,32 @@ const CATEGORY_ICONS = {
 };
 const CATEGORIES = Product.schema.path("category").enumValues;
 
+// Vistas: una por visitante y producto cada 24 horas. La cookie solo guarda los ids ya vistos
+// (ningún dato personal). No cuentan los administradores ni los bots o vistas previas de links.
+const SEEN_COOKIE = "tg_vistos";
+const SEEN_MAX = 50;
+const SEEN_MS = 24 * 60 * 60 * 1000;
+const NOT_A_VISITOR = /bot|crawl|spider|slurp|preview|facebookexternalhit|whatsapp|telegram/i;
+
+const seenProducts = (req) =>
+  String(req.cookies?.[SEEN_COOKIE] ?? "")
+    .split(".")
+    .filter((id) => /^[a-f0-9]{24}$/.test(id))
+    .slice(-SEEN_MAX);
+
+const countView = async (req, res, productId) => {
+  const id = String(productId);
+  const seen = seenProducts(req);
+  if (req.user?.role === "admin" || NOT_A_VISITOR.test(req.get("user-agent") || "") || seen.includes(id)) return;
+  await Product.updateOne({ _id: productId }, { $inc: { views: 1 } });
+  res.cookie(SEEN_COOKIE, [...seen, id].slice(-SEEN_MAX).join("."), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: SEEN_MS,
+  });
+};
+
 const renderError = (res, code, message) =>
   res.status(code).render("error", { title: "Error", code, message });
 
@@ -64,16 +90,26 @@ const getCategoriesWithCount = async () => {
   }));
 };
 
+// Solo se muestran en el inicio productos publicados con stock.
+const forSale = () => ({ status: true, stock: mongoose.trusted({ $gt: 0 }) });
+
+// Imagen grande del inicio: el que eligió el administrador; si no hay, el más visto;
+// si todavía nadie vio nada, el más caro.
+const pickHero = async () =>
+  (await Product.findOne({ ...forSale(), featured: true }).lean()) ||
+  (await Product.findOne({ ...forSale(), views: mongoose.trusted({ $gt: 0 }) }).sort({ views: -1, price: -1 }).lean()) ||
+  (await Product.findOne(forSale()).sort({ price: -1 }).lean());
+
 viewsRouter.get("/", async (_req, res) => {
   try {
-    const [featured, categories] = await Promise.all([
-      Product.find({ status: true, stock: mongoose.trusted({ $gt: 0 }) })
-        .sort({ price: -1 })
-        .limit(4)
-        .lean(),
-      getCategoriesWithCount(),
-    ]);
-    return res.render("index", { featured, categories });
+    const [hero, categories] = await Promise.all([pickHero(), getCategoriesWithCount()]);
+    // Destacados: el de la imagen grande primero y después los más vistos.
+    const others = await Product.find({ ...forSale(), ...(hero ? { _id: mongoose.trusted({ $ne: hero._id }) } : {}) })
+      .sort({ views: -1, price: -1 })
+      .limit(hero ? 3 : 4)
+      .lean();
+    const featured = hero ? [hero, ...others] : others;
+    return res.render("index", { hero, featured, categories });
   } catch (error) {
     return renderError(res, 500, "No es posible mostrar la página de inicio");
   }
@@ -160,6 +196,7 @@ viewsRouter.get("/products/:pid", async (req, res) => {
 
     const product = await Product.findOne({ _id: pid, status: true }).lean();
     if (!product) return renderError(res, 404, "Ese producto no existe o ya no está a la venta");
+    await countView(req, res, product._id);
 
     const related = await Product.find({ category: product.category, status: true, _id: mongoose.trusted({ $ne: product._id }) })
       .limit(4)
@@ -297,6 +334,7 @@ viewsRouter.get("/admin", requireAdmin, async (req, res) => {
             paused: { $sum: { $cond: ["$status", 0, 1] } },
             outOfStock: { $sum: { $cond: [{ $eq: ["$stock", 0] }, 1, 0] } },
             units: { $sum: "$stock" },
+            views: { $sum: "$views" },
           },
         },
       ]),
@@ -306,7 +344,7 @@ viewsRouter.get("/admin", requireAdmin, async (req, res) => {
       title: "Administrar productos",
       products,
       q,
-      stats: stats[0] || { total: 0, paused: 0, outOfStock: 0, units: 0 },
+      stats: stats[0] || { total: 0, paused: 0, outOfStock: 0, units: 0, views: 0 },
       categories: CATEGORIES,
       // Primero las subidas desde el panel (las más nuevas arriba) y después las de fábrica.
       images: [

@@ -282,6 +282,7 @@ h1, h2 { text-wrap: balance; }
 .badge--ok { color: #86efac; background: rgb(34 197 94 / 0.1); border-color: rgb(34 197 94 / 0.3); }
 .badge--warn { color: #fcd34d; background: rgb(245 158 11 / 0.1); border-color: rgb(245 158 11 / 0.3); }
 .badge--out { color: #fca5a5; background: rgb(239 68 68 / 0.1); border-color: rgb(239 68 68 / 0.3); }
+.badge--featured { color: var(--accent-2); background: rgb(255 106 61 / 0.1); border-color: rgb(255 106 61 / 0.35); }
 
 .error-page { text-align: center; padding: 96px 0; }
 .error-page h1 { font-size: 4rem; color: var(--accent); }

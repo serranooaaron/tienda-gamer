@@ -44,6 +44,17 @@ const productSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: "product.jpg"
+  },
+  // Lo elige el administrador para la imagen grande del inicio (uno a la vez).
+  featured: {
+    type: Boolean,
+    default: false
+  },
+  // Visitas a la página del producto: una por visitante cada 24 horas, sin contar administradores.
+  views: {
+    type: Number,
+    default: 0,
+    min: 0
   }
 }, { timestamps: true });
 
@@ -53,6 +64,9 @@ productSchema.index({ title: 1 }, { unique: true });
 productSchema.index({ description: "text" });
 productSchema.index({ code: 1 }, { unique: true });
 productSchema.index({ price: 1 });
+// El inicio busca el destacado y los más vistos en cada visita.
+productSchema.index({ featured: 1, status: 1 });
+productSchema.index({ status: 1, views: -1 });
 
 //indice compuesto
 //productSchema.index({ category: 1, title: 1 });
