@@ -1,0 +1,51 @@
+# Corre los tests en cada pull request y en cada cambio que entra a main.
+# Render publica main: si este chequeo falla en un PR, el cambio no debería unirse.
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Solo lectura del código: el workflow no necesita escribir en el repo.
+permissions:
+  contents: read
+
+# Un push nuevo a la misma rama cancela la corrida anterior, que ya quedó vieja.
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests y dependencias
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Fuera de node_modules, porque npm ci la borra y el caché no serviría.
+      # Ruta absoluta: la librería no expande "~".
+      MONGOMS_DOWNLOAD_DIR: /home/runner/.cache/mongodb-binaries
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # Guarda el binario de MongoDB que descargan los tests, así no se baja en cada corrida.
+      - uses: actions/cache@v4
+        with:
+          path: /home/runner/.cache/mongodb-binaries
+          key: mongodb-binaries-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Tests (Mocha + Supertest sobre MongoDB en memoria)
+        run: npm test
+
+      - name: Vulnerabilidades altas o críticas en producción
+        run: npm audit --omit=dev --audit-level=high
