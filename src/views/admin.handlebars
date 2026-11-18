@@ -54,7 +54,7 @@
             <td class="num">
               {{#if (eq stock 0)}}<span class="badge badge--out">0</span>{{else if (lte stock 3)}}<span class="badge badge--warn">{{stock}}</span>{{else}}{{stock}}{{/if}}
             </td>
-            <td class="num">{{views}}</td>
+            <td class="num">{{#if views}}{{views}}{{else}}0{{/if}}</td>
             <td>
               <button class="badge badge-toggle {{#if status}}badge--ok{{/if}}" type="button" data-toggle-status title="Cambiar estado">
                 {{#if status}}Publicado{{else}}Pausado{{/if}}

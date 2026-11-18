@@ -106,6 +106,19 @@ describe("Destacado y vistas", () => {
       expect(await viewsOf(product)).to.equal(1);
     });
 
+    it("los productos cargados antes de este cambio cuentan desde 0", async () => {
+      // Como los que ya están en Atlas: sin los campos views ni featured.
+      const { insertedId } = await Product.collection.insertOne({ ...productData({ title: "Producto viejo sin vistas" }), status: true });
+      const { agent } = await loginAs("admin");
+
+      const page = await agent.get("/admin").expect(200);
+      const row = page.text.slice(page.text.indexOf("Producto viejo sin vistas"));
+      expect(row).to.match(/<td class="num">0<\/td>/);
+
+      await request.get(`/products/${insertedId}`).expect(200);
+      expect((await Product.findById(insertedId).lean()).views).to.equal(1);
+    });
+
     it("la API pública no expone las vistas", async () => {
       const product = await createProduct({ views: 40 });
       const list = await request.get("/api/products").expect(200);
