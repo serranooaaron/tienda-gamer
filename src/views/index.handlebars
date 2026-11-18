@@ -22,20 +22,22 @@
     </div>
   </section>
 
-  <section class="container section">
-    <div class="section__head">
-      <h2>Categorías</h2>
-    </div>
-    <div class="category-grid">
-      {{#each categories}}
-        <a class="category-card" href="/products?category={{value}}">
-          <span class="category-card__icon" aria-hidden="true">{{icon}}</span>
-          <strong>{{categoryLabel value}}</strong>
-          <span>{{count}} {{#if (eq count 1)}}producto{{else}}productos{{/if}}</span>
-        </a>
-      {{/each}}
-    </div>
-  </section>
+  {{#if categories.length}}
+    <section class="container section">
+      <div class="section__head">
+        <h2>Categorías</h2>
+      </div>
+      <div class="category-grid">
+        {{#each categories}}
+          <a class="category-card" href="/products?category={{value}}">
+            <span class="category-card__icon" aria-hidden="true">{{icon}}</span>
+            <strong>{{categoryLabel value}}</strong>
+            <span>{{count}} {{#if (eq count 1)}}producto{{else}}productos{{/if}}</span>
+          </a>
+        {{/each}}
+      </div>
+    </section>
+  {{/if}}
 
   {{#if featured.length}}
     <section class="container section">

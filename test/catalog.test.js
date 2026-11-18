@@ -2,7 +2,7 @@ import { expect } from "chai";
 import Product from "../src/models/product.model.js";
 import { seedProducts } from "../src/data/seeders.js";
 import sampleProducts from "../src/data/products.js";
-import { CATEGORIES, CatalogError, checkCategoryFields, cleanSpecs, specSheet } from "../public/js/catalogSchema.js";
+import { CATEGORIES, CatalogError, GROUPS, checkCategoryFields, cleanSpecs, specSheet } from "../public/js/catalogSchema.js";
 import { createProduct, loginAs, productData, request } from "./helpers.js";
 
 describe("Catálogo técnico", () => {
@@ -55,6 +55,28 @@ describe("Catálogo técnico", () => {
       expect(() => checkCategoryFields({ category: "teclados", subcategory: "constructor" })).to.throw(CatalogError);
       expect(() => checkCategoryFields({ category: "teclados", brand: "Logitec" })).to.throw(CatalogError, "Marca inválida");
       expect(() => checkCategoryFields({ category: "teclados", brand: "Intel" })).to.throw(CatalogError);
+    });
+
+    it("valida las fichas de componentes y monitores", () => {
+      expect(cleanSpecs("placas-de-video", { chip: "GeForce RTX 4060", memoryGb: "8", memoryType: "GDDR6", hdmi: 1, displayPort: 3, backplate: true }))
+        .to.deep.equal({ chip: "GeForce RTX 4060", memoryGb: 8, memoryType: "GDDR6", hdmi: 1, displayPort: 3, backplate: true });
+      expect(cleanSpecs("procesadores", { socket: "AM5", cores: 8, boostGhz: "5,4" })).to.deep.equal({ socket: "AM5", cores: 8, boostGhz: 5.4 });
+      expect(() => cleanSpecs("procesadores", { socket: "LGA1151" })).to.throw(CatalogError, "Socket: debe ser una de estas opciones");
+      expect(() => cleanSpecs("monitores", { memoryGb: 8 })).to.throw(CatalogError, "no tiene estos campos: memoryGb");
+      expect(() => checkCategoryFields({ category: "procesadores", subcategory: "amd-ryzen", brand: "Logitech" })).to.throw(CatalogError, "Marca inválida");
+      expect(() => checkCategoryFields({ category: "motherboards", subcategory: "am5", brand: "Asrock" })).to.not.throw();
+    });
+
+    it("cada categoría pertenece a un grupo conocido", () => {
+      for (const [key, category] of Object.entries(CATEGORIES)) expect(GROUPS, key).to.have.property(category.group);
+      expect(Object.keys(CATEGORIES)).to.include.members(["procesadores", "placas-de-video", "memorias-ram", "motherboards", "gabinetes", "monitores"]);
+    });
+
+    it("muestra la ficha de un monitor con sus unidades", () => {
+      const sheet = specSheet("monitores", { sizeIn: 27, refreshHz: 165, brightnessNits: 350, pivot: true });
+      expect(sheet[0].rows).to.deep.include({ label: "Tamaño", value: "27 pulgadas" });
+      expect(sheet[1].rows).to.deep.include({ label: "Brillo", value: "350 cd/m²" });
+      expect(sheet.find((section) => section.title === "Ergonomía").rows).to.deep.equal([{ label: "Pivote (vertical)", value: "Sí" }]);
     });
 
     it("arma la ficha para mostrar con unidades, formato local y sin secciones vacías", () => {
@@ -152,6 +174,25 @@ describe("Catálogo técnico", () => {
       const page = await request.get(`/products/${product._id}`).expect(200);
       expect(page.text).to.not.include("<img src=x");
       expect(page.text).to.include("&lt;img src&#x3D;x");
+    });
+  });
+
+  describe("categorías vacías", () => {
+    it("el inicio y los chips solo muestran categorías con productos, salvo la elegida", async () => {
+      await createProduct({ category: "teclados" });
+
+      const home = await request.get("/").expect(200);
+      expect(home.text).to.include('href="/products?category=teclados"');
+      expect(home.text).to.not.include('href="/products?category=monitores"');
+
+      // En los chips Handlebars escapa el "=" del link: se buscan por el nombre de la categoría.
+      const chips = (text) => text.match(/<nav class="chips"[\s\S]*?<\/nav>/)[0];
+      const list = await request.get("/products").expect(200);
+      expect(chips(list.text)).to.include("Teclados");
+      expect(chips(list.text)).to.not.include("Gabinetes");
+
+      const empty = await request.get("/products?category=gabinetes").expect(200);
+      expect(empty.text).to.match(/chip--active[^>]*>[\s\S]*?Gabinetes/);
     });
   });
 

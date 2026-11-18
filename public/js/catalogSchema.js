@@ -10,6 +10,8 @@
 //   options valores permitidos, solo en "select"
 
 const CONNECTION = ["Cable USB", "Inalámbrico 2,4 GHz", "Bluetooth", "Multimodo (2,4 GHz + Bluetooth)"];
+const SOCKETS = ["AM5", "AM4", "LGA1700", "LGA1851"];
+const MEMORY_TYPES = ["DDR4", "DDR5", "DDR4 y DDR5"];
 
 export const CATEGORIES = {
   teclados: {
@@ -164,9 +166,262 @@ export const CATEGORIES = {
       },
     ],
   },
+
+  procesadores: {
+    label: "Procesadores",
+    group: "componentes",
+    subcategories: { "intel-core": "Intel Core", "amd-ryzen": "AMD Ryzen" },
+    brands: ["Intel", "AMD"],
+    sections: [
+      {
+        title: "Plataforma",
+        fields: [
+          { key: "socket", label: "Socket", type: "select", options: SOCKETS },
+          { key: "memoryType", label: "Memoria compatible", type: "select", options: MEMORY_TYPES },
+          { key: "tdpW", label: "Consumo (TDP)", type: "number", unit: "W" },
+        ],
+      },
+      {
+        title: "Rendimiento",
+        fields: [
+          { key: "cores", label: "Núcleos", type: "number" },
+          { key: "threads", label: "Hilos", type: "number" },
+          { key: "baseGhz", label: "Frecuencia base", type: "number", unit: "GHz" },
+          { key: "boostGhz", label: "Frecuencia turbo", type: "number", unit: "GHz" },
+          { key: "l3CacheMb", label: "Caché L3", type: "number", unit: "MB" },
+        ],
+      },
+      {
+        title: "Incluye",
+        fields: [
+          { key: "integratedGraphics", label: "Gráficos integrados", type: "boolean" },
+          { key: "cooler", label: "Cooler en la caja", type: "boolean" },
+        ],
+      },
+    ],
+  },
+
+  "placas-de-video": {
+    label: "Placas de video",
+    group: "componentes",
+    subcategories: { "nvidia-geforce": "NVIDIA GeForce", "amd-radeon": "AMD Radeon", "intel-arc": "Intel Arc" },
+    brands: ["Asus", "MSI", "Gigabyte Aorus", "Zotac", "PNY", "Palit", "INNO3D", "Sapphire", "PowerColor", "XFX", "Asrock"],
+    sections: [
+      {
+        title: "Chip y memoria",
+        fields: [
+          { key: "chip", label: "Chip", type: "text" },
+          { key: "interface", label: "Interfaz", type: "select", options: ["PCIe 4.0 x16", "PCIe 5.0 x16", "PCIe 4.0 x8"] },
+          { key: "memoryGb", label: "Memoria", type: "number", unit: "GB" },
+          { key: "memoryType", label: "Tipo de memoria", type: "select", options: ["GDDR6", "GDDR6X", "GDDR7"] },
+          { key: "busBits", label: "Bus de memoria", type: "number", unit: "bits" },
+          { key: "memoryMhz", label: "Velocidad de memoria", type: "number", unit: "MHz" },
+        ],
+      },
+      {
+        title: "Frecuencias",
+        fields: [
+          { key: "baseMhz", label: "Frecuencia base", type: "number", unit: "MHz" },
+          { key: "boostMhz", label: "Frecuencia boost", type: "number", unit: "MHz" },
+        ],
+      },
+      {
+        title: "Salidas",
+        fields: [
+          { key: "hdmi", label: "HDMI", type: "number" },
+          { key: "displayPort", label: "DisplayPort", type: "number" },
+        ],
+      },
+      {
+        title: "Energía y tamaño",
+        fields: [
+          { key: "powerW", label: "Consumo", type: "number", unit: "W" },
+          { key: "psuW", label: "Fuente recomendada", type: "number", unit: "W" },
+          { key: "powerConnectors", label: "Conectores de energía", type: "text" },
+          { key: "lengthMm", label: "Largo", type: "number", unit: "mm" },
+          { key: "slots", label: "Ranuras que ocupa", type: "number" },
+          { key: "fans", label: "Ventiladores", type: "number" },
+          { key: "backplate", label: "Backplate", type: "boolean" },
+        ],
+      },
+    ],
+  },
+
+  "memorias-ram": {
+    label: "Memorias RAM",
+    group: "componentes",
+    subcategories: { ddr4: "DDR4", ddr5: "DDR5" },
+    brands: ["Kingston", "Corsair", "G.Skill", "Adata", "Crucial", "PNY"],
+    sections: [
+      {
+        title: "Capacidad",
+        fields: [
+          { key: "formFactor", label: "Formato", type: "select", options: ["DIMM (PC)", "SO-DIMM (notebook)"] },
+          { key: "capacityGb", label: "Capacidad total", type: "number", unit: "GB" },
+          { key: "modules", label: "Módulos", type: "select", options: ["1 × módulo", "2 × módulos (kit)", "4 × módulos (kit)"] },
+        ],
+      },
+      {
+        title: "Rendimiento",
+        fields: [
+          { key: "speedMhz", label: "Velocidad", type: "number", unit: "MHz" },
+          { key: "latencyCl", label: "Latencia (CL)", type: "number" },
+          { key: "voltage", label: "Voltaje", type: "number", unit: "V" },
+          { key: "profile", label: "Perfil de overclock", type: "select", options: ["XMP", "EXPO", "XMP y EXPO", "Ninguno"] },
+        ],
+      },
+      {
+        title: "Diseño",
+        fields: [
+          { key: "heatsink", label: "Disipador", type: "boolean" },
+          { key: "rgb", label: "RGB", type: "boolean" },
+        ],
+      },
+    ],
+  },
+
+  motherboards: {
+    label: "Motherboards",
+    group: "componentes",
+    subcategories: { am5: "AMD AM5", am4: "AMD AM4", lga1700: "Intel LGA1700", lga1851: "Intel LGA1851" },
+    brands: ["Asus", "MSI", "Gigabyte Aorus", "Asrock"],
+    sections: [
+      {
+        title: "Plataforma",
+        fields: [
+          { key: "chipset", label: "Chipset", type: "text" },
+          { key: "formFactor", label: "Formato", type: "select", options: ["ATX", "Micro-ATX", "Mini-ITX", "E-ATX"] },
+        ],
+      },
+      {
+        title: "Memoria",
+        fields: [
+          { key: "memoryType", label: "Tipo de memoria", type: "select", options: MEMORY_TYPES },
+          { key: "memorySlots", label: "Ranuras de memoria", type: "number" },
+          { key: "maxMemoryGb", label: "Memoria máxima", type: "number", unit: "GB" },
+        ],
+      },
+      {
+        title: "Almacenamiento y expansión",
+        fields: [
+          { key: "m2Slots", label: "Ranuras M.2", type: "number" },
+          { key: "sataPorts", label: "Puertos SATA", type: "number" },
+          { key: "pcieX16", label: "Ranuras PCIe x16", type: "number" },
+        ],
+      },
+      {
+        title: "Conectividad",
+        fields: [
+          { key: "wifi", label: "Wi-Fi", type: "select", options: ["Sin Wi-Fi", "Wi-Fi 6", "Wi-Fi 6E", "Wi-Fi 7"] },
+          { key: "bluetooth", label: "Bluetooth", type: "boolean" },
+          { key: "lanGbps", label: "Red cableada", type: "number", unit: "Gbps" },
+          { key: "usbPorts", label: "Puertos USB traseros", type: "number" },
+        ],
+      },
+    ],
+  },
+
+  gabinetes: {
+    label: "Gabinetes",
+    group: "componentes",
+    subcategories: { atx: "ATX", "micro-atx": "Micro-ATX", "mini-itx": "Mini-ITX" },
+    brands: ["Corsair", "NZXT", "Cooler Master", "Thermaltake", "Deepcool", "Antec", "AeroCool", "Gamemax", "Sentey", "Cougar", "Asus"],
+    sections: [
+      {
+        title: "Formato",
+        fields: [
+          { key: "formFactor", label: "Tipo", type: "select", options: ["Mid Tower", "Full Tower", "Mini Tower", "Compacto"] },
+          { key: "motherboards", label: "Motherboards compatibles", type: "text" },
+          { key: "sidePanel", label: "Panel lateral", type: "select", options: ["Vidrio templado", "Acrílico", "Sólido"] },
+        ],
+      },
+      {
+        title: "Refrigeración",
+        fields: [
+          { key: "fansIncluded", label: "Ventiladores incluidos", type: "number" },
+          { key: "radiatorMm", label: "Radiadores soportados", type: "text" },
+          { key: "maxCoolerMm", label: "Altura máxima del cooler", type: "number", unit: "mm" },
+          { key: "rgb", label: "RGB", type: "boolean" },
+        ],
+      },
+      {
+        title: "Espacio y conexiones",
+        fields: [
+          { key: "maxGpuMm", label: "Largo máximo de placa de video", type: "number", unit: "mm" },
+          { key: "frontPorts", label: "Puertos frontales", type: "text" },
+          { key: "psuIncludedW", label: "Fuente incluida", type: "number", unit: "W" },
+        ],
+      },
+    ],
+  },
+
+  monitores: {
+    label: "Monitores",
+    group: "monitores",
+    subcategories: { gaming: "Gaming", oficina: "Oficina" },
+    brands: ["Samsung", "LG", "AOC", "Asus", "Gigabyte Aorus", "MSI", "ViewSonic", "BenQ", "Philips", "Acer", "Dell"],
+    sections: [
+      {
+        title: "Pantalla",
+        fields: [
+          { key: "sizeIn", label: "Tamaño", type: "number", unit: "pulgadas" },
+          {
+            key: "resolution",
+            label: "Resolución",
+            type: "select",
+            options: ["1366 × 768", "1440 × 900", "1920 × 1080 (Full HD)", "2560 × 1080", "2560 × 1440 (2K)", "3440 × 1440", "3840 × 2160 (4K)"],
+          },
+          { key: "panel", label: "Panel", type: "select", options: ["IPS", "VA", "TN", "OLED", "LED"] },
+          { key: "curved", label: "Curvo", type: "boolean" },
+          { key: "colors", label: "Colores", type: "text" },
+          { key: "viewingAngle", label: "Ángulo de visión", type: "text" },
+        ],
+      },
+      {
+        title: "Imagen",
+        fields: [
+          { key: "refreshHz", label: "Frecuencia de actualización", type: "number", unit: "Hz" },
+          { key: "responseMs", label: "Tiempo de respuesta", type: "number", unit: "ms" },
+          { key: "brightnessNits", label: "Brillo", type: "number", unit: "cd/m²" },
+          { key: "hdr", label: "HDR", type: "select", options: ["No", "HDR10", "HDR400", "HDR600", "HDR1000"] },
+          { key: "sync", label: "Sincronización", type: "select", options: ["Sin sincronización", "FreeSync", "G-Sync compatible", "FreeSync y G-Sync"] },
+        ],
+      },
+      {
+        title: "Conexiones",
+        fields: [
+          { key: "hdmi", label: "HDMI", type: "number" },
+          { key: "displayPort", label: "DisplayPort", type: "number" },
+          { key: "vga", label: "VGA", type: "boolean" },
+          { key: "usbC", label: "USB-C", type: "boolean" },
+          { key: "speakers", label: "Parlantes", type: "boolean" },
+        ],
+      },
+      {
+        title: "Ergonomía",
+        fields: [
+          { key: "tilt", label: "Inclinación", type: "boolean" },
+          { key: "swivel", label: "Giro lateral", type: "boolean" },
+          { key: "pivot", label: "Pivote (vertical)", type: "boolean" },
+          { key: "heightAdjust", label: "Altura regulable", type: "boolean" },
+          { key: "vesa", label: "Montaje VESA", type: "boolean" },
+        ],
+      },
+      {
+        title: "Energía y caja",
+        fields: [
+          { key: "powerW", label: "Consumo", type: "number", unit: "W" },
+          { key: "boxContents", label: "Contenido de la caja", type: "text" },
+        ],
+      },
+    ],
+  },
 };
 
 export const CATEGORY_KEYS = Object.keys(CATEGORIES);
+
+// Grupos para ordenar el catálogo (periféricos, componentes, monitores).
+export const GROUPS = { perifericos: "Periféricos", componentes: "Componentes", monitores: "Monitores" };
 
 const TEXT_MAX = 80;
 const NUMBER_MAX = 1_000_000;

@@ -45,6 +45,12 @@ const CATEGORY_ICONS = {
   mouse: "🖱️",
   webcams: "📷",
   microfonos: "🎙️",
+  procesadores: "🧠",
+  "placas-de-video": "🎞️",
+  "memorias-ram": "💾",
+  motherboards: "🧩",
+  gabinetes: "🗄️",
+  monitores: "🖥️",
 };
 const CATEGORIES = Product.schema.path("category").enumValues;
 
@@ -77,7 +83,8 @@ const countView = async (req, res, productId) => {
 const renderError = (res, code, message) =>
   res.status(code).render("error", { title: "Error", code, message });
 
-// Categorias con la cantidad de productos de cada una (para chips y tarjetas).
+// Categorías con la cantidad de productos publicados de cada una (para chips y tarjetas).
+// Devuelve también las vacías: cada vista decide si las oculta.
 const getCategoriesWithCount = async () => {
   const counts = await Product.aggregate([
     { $match: { status: true } },
@@ -110,7 +117,8 @@ viewsRouter.get("/", async (_req, res) => {
       .limit(hero ? 3 : 4)
       .lean();
     const featured = hero ? [hero, ...others] : others;
-    return res.render("index", { hero, featured, categories });
+    // Una tarjeta "0 productos" lleva a una página vacía: solo se muestran las que tienen algo.
+    return res.render("index", { hero, featured, categories: categories.filter((c) => c.count > 0) });
   } catch (error) {
     return renderError(res, 500, "No es posible mostrar la página de inicio");
   }
@@ -168,7 +176,8 @@ viewsRouter.get("/products", async (req, res) => {
       nextLink: data.hasNextPage ? buildLink({ page: data.nextPage }) : null,
       categoryChips: [
         { label: "Todos", link: buildLink({ category: "" }), active: !category },
-        ...categories.map((c) => ({
+        // Sin las categorías vacías, salvo la elegida (si alguien llega por un link, la ve marcada).
+        ...categories.filter((c) => c.count > 0 || c.value === category).map((c) => ({
           label: categoryLabel(c.value),
           icon: c.icon,
           count: c.count,
