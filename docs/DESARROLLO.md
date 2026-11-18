@@ -26,6 +26,38 @@ Un patrón que se repite: **los módulos que necesitan el servidor y el navegado
 
 ---
 
+## Tests automáticos en GitHub y pull requests (18/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| Workflow "Tests" | `.github/workflows/tests.yml` | Corre `npm ci`, `npm test` y `npm audit --omit=dev --audit-level=high` en cada pull request y en cada push a `main` |
+| Plantilla de pull request | `.github/pull_request_template.md` | Cada PR cuenta qué cambia, cómo se probó, qué no se verificó y qué hacer después de unirlo |
+| Insignia de estado | `readme.md` | Muestra si los tests de `main` pasan |
+
+### Cómo funciona
+
+1. Cada mejora se hace en su propia rama y se sube a GitHub como pull request contra `main`.
+2. GitHub Actions corre el workflow en una máquina Ubuntu con Node 24, la misma versión mayor que usa Render. Los tests levantan su propia MongoDB en memoria y generan su `JWT_SECRET`, así que no necesitan secretos del repositorio.
+3. El PR muestra el resultado del chequeo. Se une a `main` solo con el chequeo en verde, y recién ahí Render publica.
+
+### Por qué
+
+- **Antes no había un segundo control:** los tests corrían solo en la computadora de desarrollo. Ahora corren en una máquina limpia, instalando exactamente lo que dice `package-lock.json` (`npm ci`). Eso detecta los "en mi máquina anda" que vienen de archivos sin commitear o de dependencias instaladas a mano.
+- **`permissions: contents: read` y `persist-credentials: false`:** el workflow solo lee el código. Si alguna acción o dependencia estuviera comprometida, no tendría un token con permiso de escritura en el repo.
+- **`concurrency`:** un push nuevo a la misma rama cancela la corrida vieja, que ya no sirve.
+- **Caché del binario de MongoDB:** `mongodb-memory-server` descarga unos 100 MB la primera vez. Con caché, las corridas siguientes tardan menos.
+- **`npm audit` también en CI:** la misma regla que la compuerta local. Las vulnerabilidades altas o críticas en dependencias de producción frenan el PR.
+
+### Límites conocidos
+
+- Las acciones están fijadas por versión mayor (`@v4`), no por hash del commit. Fijarlas por hash es más seguro pero obliga a actualizarlas a mano. Dependabot podría hacerlo.
+- El escaneo de secretos (ggshield) sigue corriendo solo localmente, en el hook de pre-commit. En CI necesitaría una clave de API guardada como secreto del repo.
+- Que un PR con tests fallando no se pueda unir depende de activar la protección de la rama `main` en la configuración del repo.
+
+---
+
 ## Componentes, monitores y categorías vacías (18/11/2026)
 
 ### Qué se agregó

@@ -1,5 +1,7 @@
 # Tienda Gamer
 
+[![Tests](https://github.com/serranooaaron/tienda-gamer/actions/workflows/tests.yml/badge.svg)](https://github.com/serranooaaron/tienda-gamer/actions/workflows/tests.yml)
+
 E-commerce de periféricos gamer con API REST, vistas renderizadas en el servidor y persistencia en MongoDB.
 
 Parte de la entrega final del curso de Backend (Coderhouse, comisión 86215; los primeros commits de este repo son esa entrega) y le suma una interfaz completa, cuentas de usuario y seguridad.
