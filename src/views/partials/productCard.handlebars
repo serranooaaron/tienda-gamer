@@ -8,7 +8,7 @@
     {{/if}}
   </a>
   <div class="product-card__body">
-    <span class="product-card__category">{{categoryLabel category}}</span>
+    <span class="product-card__category">{{#if brand}}{{brand}} · {{/if}}{{categoryLabel category}}</span>
     <h3 class="product-card__title"><a href="/products/{{_id}}">{{title}}</a></h3>
   </div>
   <div class="product-card__footer">

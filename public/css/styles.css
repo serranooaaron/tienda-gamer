@@ -516,6 +516,15 @@ h1, h2 { text-wrap: balance; }
 .detail__description { color: #c9ced8; max-width: 60ch; }
 .detail__buy { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; margin-top: 6px; }
 .detail__add { flex: 1; min-width: 200px; padding: 14px 20px; font-size: 1rem; }
+/* Ficha técnica: secciones en columnas que se acomodan al ancho; cada fila etiqueta y valor. */
+.specs__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 16px; }
+.specs__group { padding: 18px 20px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+.specs__group h3 { font-size: 0.8rem; letter-spacing: 1px; text-transform: uppercase; color: var(--accent-2); margin-bottom: 10px; }
+.specs__group dl { margin: 0; display: grid; }
+.specs__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 9px 0; border-top: 1px solid var(--border); }
+.specs__row:first-child { border-top: 0; }
+.specs__row dt { color: var(--muted); }
+.specs__row dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 .detail__perks { list-style: none; margin: 8px 0 0; padding: 16px; display: grid; gap: 6px; width: 100%; border-radius: var(--radius-sm); background: var(--surface); border: 1px solid var(--border); color: var(--muted); font-size: 0.92rem; }
 
 .stepper {

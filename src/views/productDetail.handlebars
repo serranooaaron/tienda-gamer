@@ -3,6 +3,10 @@
     <a href="/products">Productos</a>
     <span aria-hidden="true">/</span>
     <a href="/products?category={{product.category}}">{{categoryLabel product.category}}</a>
+    {{#if product.subcategory}}
+      <span aria-hidden="true">/</span>
+      <span>{{subcategoryLabel product.category product.subcategory}}</span>
+    {{/if}}
     <span aria-hidden="true">/</span>
     <span>{{product.title}}</span>
   </nav>
@@ -14,9 +18,9 @@
       </div>
 
       <div class="detail__info">
-        <span class="product-card__category">{{categoryLabel category}}</span>
+        <span class="product-card__category">{{#if brand}}{{brand}} · {{/if}}{{categoryLabel category}}</span>
         <h1 class="detail__title">{{title}}</h1>
-        <p class="detail__code">Código {{code}}</p>
+        <p class="detail__code">{{#if model}}Modelo {{model}} · {{/if}}Código {{code}}</p>
         <p class="detail__price">{{money price}}</p>
 
         {{#if (eq stock 0)}}
@@ -47,10 +51,31 @@
         <ul class="detail__perks">
           <li>🔒 Tu carrito queda guardado en tu cuenta</li>
           <li>📦 Stock actualizado al momento</li>
+          {{#if warrantyMonths}}<li>🛡️ Garantía de {{warrantyMonths}} {{#if (eq warrantyMonths 1)}}mes{{else}}meses{{/if}}</li>{{/if}}
         </ul>
       </div>
     </article>
   {{/with}}
+
+  {{#if specs.length}}
+    <section class="section specs" aria-labelledby="specs-title">
+      <div class="section__head">
+        <h2 id="specs-title">Especificaciones</h2>
+      </div>
+      <div class="specs__grid">
+        {{#each specs}}
+          <section class="specs__group" aria-labelledby="specs-{{@index}}">
+            <h3 id="specs-{{@index}}">{{title}}</h3>
+            <dl>
+              {{#each rows}}
+                <div class="specs__row"><dt>{{label}}</dt><dd>{{value}}</dd></div>
+              {{/each}}
+            </dl>
+          </section>
+        {{/each}}
+      </div>
+    </section>
+  {{/if}}
 
   {{#if related.length}}
     <section class="section">

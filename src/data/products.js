@@ -9,7 +9,12 @@ const products = [
     thumbnail: "/image/QUAZAR-1.png",
     price: 540,
     status: true,
-    category: "microfonos"
+    category: "microfonos",
+    brand: "Redragon",
+    subcategory: "usb",
+    model: "GM200 Quasar",
+    warrantyMonths: 12,
+    specs: { capsule: "Condensador", polarPattern: "Cardioide", connection: "USB-A", stand: true }
   },
   {
     title: "Webcam Hitman GW800",
@@ -20,7 +25,12 @@ const products = [
     thumbnail: "/image/HITMAN-800.png",
     price: 310,
     status: true,
-    category: "webcams"
+    category: "webcams",
+    brand: "Redragon",
+    subcategory: "full-hd",
+    model: "GW800 Hitman",
+    warrantyMonths: 12,
+    specs: { resolution: "1080p", fps: 30, microphone: "Mono", autofocus: false }
   },
   {
     title: "Mouse King M724",
@@ -31,7 +41,12 @@ const products = [
     thumbnail: "/image/KING-M724-B.png",
     price: 300,
     status: true,
-    category: "mouse"
+    category: "mouse",
+    brand: "Redragon",
+    subcategory: "con-cable",
+    model: "M724 King",
+    warrantyMonths: 12,
+    specs: { buttons: 6, grip: "Diestro", rgb: true, connection: "Cable USB" }
   },
   {
     title: "Mouse M601RGB",
@@ -42,7 +57,12 @@ const products = [
     thumbnail: "/image/CETROPHORUS-RGB.png",
     price: 200,
     status: true,
-    category: "mouse"
+    category: "mouse",
+    brand: "Redragon",
+    subcategory: "con-cable",
+    model: "M601 Centrophorus",
+    warrantyMonths: 12,
+    specs: { dpi: 7200, buttons: 6, grip: "Diestro", rgb: true, connection: "Cable USB" }
   },
   {
     title: "Auriculares Lamia 2 H320",
@@ -53,7 +73,12 @@ const products = [
     thumbnail: "/image/LAMIA.png",
     price: 260,
     status: true,
-    category: "auriculares"
+    category: "auriculares",
+    brand: "Redragon",
+    subcategory: "con-cable",
+    model: "H320 Lamia 2",
+    warrantyMonths: 12,
+    specs: { sound: "Surround 7.1 virtual", microphone: "Fijo", connection: "USB", rgb: true }
   },
   {
     title: "Auriculares Ares H120",
@@ -64,7 +89,12 @@ const products = [
     thumbnail: "/image/ARES.png",
     price: 450,
     status: true,
-    category: "auriculares"
+    category: "auriculares",
+    brand: "Redragon",
+    subcategory: "con-cable",
+    model: "H120 Ares",
+    warrantyMonths: 12,
+    specs: { sound: "Estéreo", microphone: "Fijo", connection: "Jack 3,5 mm" }
   },
   {
     title: "Microfono Blazar GM300",
@@ -75,7 +105,12 @@ const products = [
     thumbnail: "/image/BLAZAR.png",
     price: 620,
     status: true,
-    category: "microfonos"
+    category: "microfonos",
+    brand: "Redragon",
+    subcategory: "usb",
+    model: "GM300 Blazar",
+    warrantyMonths: 12,
+    specs: { capsule: "Condensador", polarPattern: "Cardioide", connection: "USB-A" }
   },
   {
     title: "Auriculares Cybill H510",
@@ -86,7 +121,12 @@ const products = [
     thumbnail: "/image/Cybill.png",
     price: 410,
     status: true,
-    category: "auriculares"
+    category: "auriculares",
+    brand: "Redragon",
+    subcategory: "con-cable",
+    model: "H510 Cybill",
+    warrantyMonths: 12,
+    specs: { sound: "Surround 7.1 virtual", microphone: "Desmontable", connection: "USB", rgb: true }
   },
   {
     title: "Mouse King Pro M916",
@@ -97,7 +137,12 @@ const products = [
     thumbnail: "/image/KING-PRO-1K-BLACK-M916.png",
     price: 480,
     status: true,
-    category: "mouse"
+    category: "mouse",
+    brand: "Redragon",
+    subcategory: "inalambricos",
+    model: "M916 King Pro",
+    warrantyMonths: 12,
+    specs: { grip: "Diestro", connection: "Multimodo (2,4 GHz + Bluetooth)", rgb: true }
   }
 ];
 

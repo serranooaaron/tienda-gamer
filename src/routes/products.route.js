@@ -4,7 +4,7 @@ import Product from "../models/product.model.js";
 import { requireAdmin } from "../middlewares/auth.middleware.js";
 import { escapeRegex } from "../utils/regex.js";
 import { uploadProductImage } from "../utils/uploader.js";
-import { ProductInputError, pickProductFields } from "../utils/productInput.js";
+import { ProductInputError, applyCatalogRules, pickProductFields } from "../utils/productInput.js";
 
 const productsRouter = express.Router();
 
@@ -70,7 +70,7 @@ productsRouter.post("/images", requireAdmin, uploadProductImage, (req, res) => {
 
 productsRouter.post("/", requireAdmin, async (req, res) => {
   try {
-    const product = await Product.create(pickProductFields(req.body));
+    const product = await Product.create(applyCatalogRules(pickProductFields(req.body)));
     if (product.featured) await keepOnlyFeatured(product._id);
     res.status(201).json({ status: "success", payload: product });
   } catch (error) {
@@ -174,6 +174,9 @@ productsRouter.put("/:pid", requireAdmin, async (req, res) => {
     if (!Object.keys(updateData).length) {
       return res.status(400).json({ status: "error", message: "No hay datos para actualizar" });
     }
+    const current = await Product.findById(pid).select("category subcategory brand specs").lean();
+    if (!current) return res.status(404).json({ status: "error", message: "Producto no encontrado" });
+    applyCatalogRules(updateData, current);
 
     const updatedProduct = await Product.findByIdAndUpdate(pid, { $set: updateData }, {
       returnDocument: "after",

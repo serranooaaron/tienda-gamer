@@ -12,6 +12,7 @@ import { requireAdmin, requireAuth } from "../middlewares/auth.middleware.js";
 import { CATEGORY_LABELS } from "../utils/handlebars.js";
 import { listUploadedImages } from "../utils/uploader.js";
 import { passwordChecks } from "../../public/js/passwordPolicy.js";
+import { specSheet } from "../../public/js/catalogSchema.js";
 
 const categoryLabel = (value) => CATEGORY_LABELS[value] || value;
 
@@ -202,7 +203,9 @@ viewsRouter.get("/products/:pid", async (req, res) => {
       .limit(4)
       .lean();
 
-    return res.render("productDetail", { title: product.title, product, related });
+    // Ficha técnica en secciones, solo con los datos cargados.
+    const specs = specSheet(product.category, product.specs);
+    return res.render("productDetail", { title: product.title, product, related, specs });
   } catch (error) {
     return renderError(res, 500, "No es posible mostrar este producto");
   }

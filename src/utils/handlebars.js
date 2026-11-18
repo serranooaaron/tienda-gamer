@@ -1,3 +1,4 @@
+import { CATEGORIES, subcategoryLabel } from "../../public/js/catalogSchema.js";
 // Helpers disponibles en todas las vistas de Handlebars.
 const moneyFormatter = new Intl.NumberFormat("es-AR", {
   style: "currency",
@@ -11,13 +12,8 @@ const dateFormatter = new Intl.DateTimeFormat("es-AR", {
   timeZone: "America/Argentina/Buenos_Aires"
 });
 
-export const CATEGORY_LABELS = {
-  auriculares: "Auriculares",
-  teclados: "Teclados",
-  mouse: "Mouse",
-  webcams: "Webcams",
-  microfonos: "Micrófonos"
-};
+// Las etiquetas salen de la definición del catálogo: un solo lugar para nombres de categoría.
+export const CATEGORY_LABELS = Object.fromEntries(Object.entries(CATEGORIES).map(([key, value]) => [key, value.label]));
 
 export default {
   eq: (a, b) => String(a) === String(b),
@@ -29,6 +25,7 @@ export default {
   dateTime: (value) => dateFormatter.format(new Date(value)),
   isoDate: (value) => new Date(value).toISOString(),
   categoryLabel: (value) => CATEGORY_LABELS[value] || value,
+  subcategoryLabel: (category, subcategory) => subcategoryLabel(category, subcategory),
   initials: (name = "") =>
     name
       .split(/\s+/)

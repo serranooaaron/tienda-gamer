@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import paginate from "mongoose-paginate-v2"
+import { CATEGORY_KEYS } from "../../public/js/catalogSchema.js";
 
 const productSchema = new mongoose.Schema({
   title: {
@@ -38,8 +39,17 @@ const productSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ["auriculares", "teclados", "mouse", "webcams", "microfonos"]
+    // Las categorías y sus fichas se definen en public/js/catalogSchema.js.
+    enum: CATEGORY_KEYS
   },
+  // Subcategoría y marca: valores de la lista de su categoría (se validan al guardar).
+  // Opcionales para no romper los productos cargados antes de que existieran.
+  subcategory: { type: String, trim: true, default: null },
+  brand: { type: String, trim: true, default: null },
+  model: { type: String, trim: true, maxLength: 80, default: "" },
+  warrantyMonths: { type: Number, min: 0, max: 120, default: null },
+  // Ficha técnica: un objeto con los campos de la categoría, ya validado y con su tipo.
+  specs: { type: mongoose.Schema.Types.Mixed, default: () => ({}) },
   thumbnail: {
     type: String,
     trim: true,
@@ -60,6 +70,9 @@ const productSchema = new mongoose.Schema({
 
 //INDEXACION
 productSchema.index({ category: 1 });
+// Filtros del catálogo por marca y subcategoría dentro de una categoría.
+productSchema.index({ category: 1, brand: 1 });
+productSchema.index({ category: 1, subcategory: 1 });
 productSchema.index({ title: 1 }, { unique: true });
 productSchema.index({ description: "text" });
 productSchema.index({ code: 1 }, { unique: true });
