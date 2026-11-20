@@ -8,6 +8,7 @@
 //   type    "text" | "number" | "boolean" | "select"
 //   unit    unidad para mostrar ("g", "Hz", "mm"...), solo en números
 //   options valores permitidos, solo en "select"
+//   filter  true si el catálogo ofrece filtrar por este campo (solo "select" y "boolean")
 
 const CONNECTION = ["Cable USB", "Inalámbrico 2,4 GHz", "Bluetooth", "Multimodo (2,4 GHz + Bluetooth)"];
 const SOCKETS = ["AM5", "AM4", "LGA1700", "LGA1851"];
@@ -23,8 +24,8 @@ export const CATEGORIES = {
       {
         title: "General",
         fields: [
-          { key: "layout", label: "Formato", type: "select", options: ["Completo (100 %)", "TKL (80 %)", "75 %", "65 %", "60 %"] },
-          { key: "connection", label: "Conexión", type: "select", options: CONNECTION },
+          { key: "layout", filter: true, label: "Formato", type: "select", options: ["Completo (100 %)", "TKL (80 %)", "75 %", "65 %", "60 %"] },
+          { key: "connection", filter: true, label: "Conexión", type: "select", options: CONNECTION },
           { key: "language", label: "Idioma", type: "select", options: ["Español (Latinoamérica)", "Español (España)", "Inglés (US)"] },
         ],
       },
@@ -32,7 +33,7 @@ export const CATEGORIES = {
         title: "Teclas",
         fields: [
           { key: "switch", label: "Switch", type: "text" },
-          { key: "switchType", label: "Tipo de switch", type: "select", options: ["Lineal", "Táctil", "Clicky", "Membrana"] },
+          { key: "switchType", filter: true, label: "Tipo de switch", type: "select", options: ["Lineal", "Táctil", "Clicky", "Membrana"] },
           { key: "hotSwap", label: "Hot-swap", type: "boolean" },
           { key: "antiGhosting", label: "Anti-ghosting", type: "boolean" },
         ],
@@ -67,14 +68,14 @@ export const CATEGORIES = {
         fields: [
           { key: "buttons", label: "Botones", type: "number" },
           { key: "weightG", label: "Peso", type: "number", unit: "g" },
-          { key: "grip", label: "Mano", type: "select", options: ["Diestro", "Ambidiestro"] },
-          { key: "rgb", label: "RGB", type: "boolean" },
+          { key: "grip", filter: true, label: "Mano", type: "select", options: ["Diestro", "Ambidiestro"] },
+          { key: "rgb", filter: true, label: "RGB", type: "boolean" },
         ],
       },
       {
         title: "Conexión",
         fields: [
-          { key: "connection", label: "Conexión", type: "select", options: CONNECTION },
+          { key: "connection", filter: true, label: "Conexión", type: "select", options: CONNECTION },
           { key: "batteryH", label: "Batería", type: "number", unit: "h" },
         ],
       },
@@ -91,21 +92,21 @@ export const CATEGORIES = {
         title: "Audio",
         fields: [
           { key: "driverMm", label: "Driver", type: "number", unit: "mm" },
-          { key: "sound", label: "Sonido", type: "select", options: ["Estéreo", "Surround 7.1 virtual"] },
+          { key: "sound", filter: true, label: "Sonido", type: "select", options: ["Estéreo", "Surround 7.1 virtual"] },
           { key: "frequencyResponse", label: "Respuesta de frecuencia", type: "text" },
         ],
       },
       {
         title: "Micrófono",
         fields: [
-          { key: "microphone", label: "Micrófono", type: "select", options: ["Desmontable", "Fijo", "Retráctil", "Sin micrófono"] },
+          { key: "microphone", filter: true, label: "Micrófono", type: "select", options: ["Desmontable", "Fijo", "Retráctil", "Sin micrófono"] },
           { key: "noiseCancelling", label: "Cancelación de ruido", type: "boolean" },
         ],
       },
       {
         title: "Conexión y diseño",
         fields: [
-          { key: "connection", label: "Conexión", type: "select", options: ["Jack 3,5 mm", "USB", "Jack 3,5 mm + USB", "Inalámbrico 2,4 GHz", "Bluetooth"] },
+          { key: "connection", filter: true, label: "Conexión", type: "select", options: ["Jack 3,5 mm", "USB", "Jack 3,5 mm + USB", "Inalámbrico 2,4 GHz", "Bluetooth"] },
           { key: "batteryH", label: "Batería", type: "number", unit: "h" },
           { key: "weightG", label: "Peso", type: "number", unit: "g" },
           { key: "rgb", label: "RGB", type: "boolean" },
@@ -123,7 +124,7 @@ export const CATEGORIES = {
       {
         title: "Audio",
         fields: [
-          { key: "capsule", label: "Cápsula", type: "select", options: ["Condensador", "Dinámico"] },
+          { key: "capsule", filter: true, label: "Cápsula", type: "select", options: ["Condensador", "Dinámico"] },
           { key: "polarPattern", label: "Patrón polar", type: "select", options: ["Cardioide", "Omnidireccional", "Bidireccional", "Estéreo", "Varios patrones"] },
           { key: "sampleRateKhz", label: "Frecuencia de muestreo", type: "number", unit: "kHz" },
           { key: "bitDepth", label: "Profundidad", type: "number", unit: "bits" },
@@ -132,7 +133,7 @@ export const CATEGORIES = {
       {
         title: "Conexión y extras",
         fields: [
-          { key: "connection", label: "Conexión", type: "select", options: ["USB-C", "USB-A", "XLR", "USB + XLR"] },
+          { key: "connection", filter: true, label: "Conexión", type: "select", options: ["USB-C", "USB-A", "XLR", "USB + XLR"] },
           { key: "stand", label: "Soporte incluido", type: "boolean" },
           { key: "popFilter", label: "Filtro antipop", type: "boolean" },
           { key: "monitoring", label: "Salida de monitoreo", type: "boolean" },
@@ -151,7 +152,7 @@ export const CATEGORIES = {
       {
         title: "Video",
         fields: [
-          { key: "resolution", label: "Resolución", type: "select", options: ["720p", "1080p", "1440p", "4K"] },
+          { key: "resolution", filter: true, label: "Resolución", type: "select", options: ["720p", "1080p", "1440p", "4K"] },
           { key: "fps", label: "Cuadros por segundo", type: "number", unit: "fps" },
           { key: "fovDeg", label: "Campo de visión", type: "number", unit: "°" },
         ],
@@ -176,8 +177,8 @@ export const CATEGORIES = {
       {
         title: "Plataforma",
         fields: [
-          { key: "socket", label: "Socket", type: "select", options: SOCKETS },
-          { key: "memoryType", label: "Memoria compatible", type: "select", options: MEMORY_TYPES },
+          { key: "socket", filter: true, label: "Socket", type: "select", options: SOCKETS },
+          { key: "memoryType", filter: true, label: "Memoria compatible", type: "select", options: MEMORY_TYPES },
           { key: "tdpW", label: "Consumo (TDP)", type: "number", unit: "W" },
         ],
       },
@@ -213,7 +214,7 @@ export const CATEGORIES = {
           { key: "chip", label: "Chip", type: "text" },
           { key: "interface", label: "Interfaz", type: "select", options: ["PCIe 4.0 x16", "PCIe 5.0 x16", "PCIe 4.0 x8"] },
           { key: "memoryGb", label: "Memoria", type: "number", unit: "GB" },
-          { key: "memoryType", label: "Tipo de memoria", type: "select", options: ["GDDR6", "GDDR6X", "GDDR7"] },
+          { key: "memoryType", filter: true, label: "Tipo de memoria", type: "select", options: ["GDDR6", "GDDR6X", "GDDR7"] },
           { key: "busBits", label: "Bus de memoria", type: "number", unit: "bits" },
           { key: "memoryMhz", label: "Velocidad de memoria", type: "number", unit: "MHz" },
         ],
@@ -256,7 +257,7 @@ export const CATEGORIES = {
       {
         title: "Capacidad",
         fields: [
-          { key: "formFactor", label: "Formato", type: "select", options: ["DIMM (PC)", "SO-DIMM (notebook)"] },
+          { key: "formFactor", filter: true, label: "Formato", type: "select", options: ["DIMM (PC)", "SO-DIMM (notebook)"] },
           { key: "capacityGb", label: "Capacidad total", type: "number", unit: "GB" },
           { key: "modules", label: "Módulos", type: "select", options: ["1 × módulo", "2 × módulos (kit)", "4 × módulos (kit)"] },
         ],
@@ -267,7 +268,7 @@ export const CATEGORIES = {
           { key: "speedMhz", label: "Velocidad", type: "number", unit: "MHz" },
           { key: "latencyCl", label: "Latencia (CL)", type: "number" },
           { key: "voltage", label: "Voltaje", type: "number", unit: "V" },
-          { key: "profile", label: "Perfil de overclock", type: "select", options: ["XMP", "EXPO", "XMP y EXPO", "Ninguno"] },
+          { key: "profile", filter: true, label: "Perfil de overclock", type: "select", options: ["XMP", "EXPO", "XMP y EXPO", "Ninguno"] },
         ],
       },
       {
@@ -290,13 +291,13 @@ export const CATEGORIES = {
         title: "Plataforma",
         fields: [
           { key: "chipset", label: "Chipset", type: "text" },
-          { key: "formFactor", label: "Formato", type: "select", options: ["ATX", "Micro-ATX", "Mini-ITX", "E-ATX"] },
+          { key: "formFactor", filter: true, label: "Formato", type: "select", options: ["ATX", "Micro-ATX", "Mini-ITX", "E-ATX"] },
         ],
       },
       {
         title: "Memoria",
         fields: [
-          { key: "memoryType", label: "Tipo de memoria", type: "select", options: MEMORY_TYPES },
+          { key: "memoryType", filter: true, label: "Tipo de memoria", type: "select", options: MEMORY_TYPES },
           { key: "memorySlots", label: "Ranuras de memoria", type: "number" },
           { key: "maxMemoryGb", label: "Memoria máxima", type: "number", unit: "GB" },
         ],
@@ -312,7 +313,7 @@ export const CATEGORIES = {
       {
         title: "Conectividad",
         fields: [
-          { key: "wifi", label: "Wi-Fi", type: "select", options: ["Sin Wi-Fi", "Wi-Fi 6", "Wi-Fi 6E", "Wi-Fi 7"] },
+          { key: "wifi", filter: true, label: "Wi-Fi", type: "select", options: ["Sin Wi-Fi", "Wi-Fi 6", "Wi-Fi 6E", "Wi-Fi 7"] },
           { key: "bluetooth", label: "Bluetooth", type: "boolean" },
           { key: "lanGbps", label: "Red cableada", type: "number", unit: "Gbps" },
           { key: "usbPorts", label: "Puertos USB traseros", type: "number" },
@@ -330,9 +331,9 @@ export const CATEGORIES = {
       {
         title: "Formato",
         fields: [
-          { key: "formFactor", label: "Tipo", type: "select", options: ["Mid Tower", "Full Tower", "Mini Tower", "Compacto"] },
+          { key: "formFactor", filter: true, label: "Tipo", type: "select", options: ["Mid Tower", "Full Tower", "Mini Tower", "Compacto"] },
           { key: "motherboards", label: "Motherboards compatibles", type: "text" },
-          { key: "sidePanel", label: "Panel lateral", type: "select", options: ["Vidrio templado", "Acrílico", "Sólido"] },
+          { key: "sidePanel", filter: true, label: "Panel lateral", type: "select", options: ["Vidrio templado", "Acrílico", "Sólido"] },
         ],
       },
       {
@@ -341,7 +342,7 @@ export const CATEGORIES = {
           { key: "fansIncluded", label: "Ventiladores incluidos", type: "number" },
           { key: "radiatorMm", label: "Radiadores soportados", type: "text" },
           { key: "maxCoolerMm", label: "Altura máxima del cooler", type: "number", unit: "mm" },
-          { key: "rgb", label: "RGB", type: "boolean" },
+          { key: "rgb", filter: true, label: "RGB", type: "boolean" },
         ],
       },
       {
@@ -367,12 +368,13 @@ export const CATEGORIES = {
           { key: "sizeIn", label: "Tamaño", type: "number", unit: "pulgadas" },
           {
             key: "resolution",
+            filter: true,
             label: "Resolución",
             type: "select",
             options: ["1366 × 768", "1440 × 900", "1920 × 1080 (Full HD)", "2560 × 1080", "2560 × 1440 (2K)", "3440 × 1440", "3840 × 2160 (4K)"],
           },
-          { key: "panel", label: "Panel", type: "select", options: ["IPS", "VA", "TN", "OLED", "LED"] },
-          { key: "curved", label: "Curvo", type: "boolean" },
+          { key: "panel", filter: true, label: "Panel", type: "select", options: ["IPS", "VA", "TN", "OLED", "LED"] },
+          { key: "curved", filter: true, label: "Curvo", type: "boolean" },
           { key: "colors", label: "Colores", type: "text" },
           { key: "viewingAngle", label: "Ángulo de visión", type: "text" },
         ],
@@ -384,7 +386,7 @@ export const CATEGORIES = {
           { key: "responseMs", label: "Tiempo de respuesta", type: "number", unit: "ms" },
           { key: "brightnessNits", label: "Brillo", type: "number", unit: "cd/m²" },
           { key: "hdr", label: "HDR", type: "select", options: ["No", "HDR10", "HDR400", "HDR600", "HDR1000"] },
-          { key: "sync", label: "Sincronización", type: "select", options: ["Sin sincronización", "FreeSync", "G-Sync compatible", "FreeSync y G-Sync"] },
+          { key: "sync", filter: true, label: "Sincronización", type: "select", options: ["Sin sincronización", "FreeSync", "G-Sync compatible", "FreeSync y G-Sync"] },
         ],
       },
       {
@@ -496,4 +498,8 @@ export const specSheet = (category, specs = {}) =>
     }))
     .filter((section) => section.rows.length);
 
-export const subcategoryLabel = (category, subcategory) => CATEGORIES[category]?.subcategories?.[subcategory] ?? "";
+// Campos de la ficha por los que se puede filtrar el catálogo de una categoría.
+export const filterFields = (category) =>
+  (CATEGORIES[category]?.sections ?? []).flatMap((section) => section.fields).filter((field) => field.filter);
+
+export const subcategoryLabel =(category, subcategory) => CATEGORIES[category]?.subcategories?.[subcategory] ?? "";

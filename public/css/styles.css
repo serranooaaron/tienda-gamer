@@ -410,12 +410,12 @@ h1, h2 { text-wrap: balance; }
 .chip--active { color: #fff; border-color: transparent; background: linear-gradient(135deg, var(--accent-strong), var(--accent-strong-2)); }
 .chip--active small { color: #fff; }
 
+.catalog-form { display: grid; gap: 12px; margin: 18px 0 24px; }
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
-  margin: 18px 0 24px;
   padding: 14px;
   border-radius: var(--radius);
   background: var(--surface);
@@ -426,6 +426,46 @@ h1, h2 { text-wrap: balance; }
 .field--inline select { width: auto; padding: 9px 12px; }
 .check { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-weight: 600; font-size: 0.9rem; cursor: pointer; }
 .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+/* Filtros de la ficha: plegables, en grilla que se adapta al ancho */
+.facets { border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+.facets__summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius);
+}
+.facets__summary::-webkit-details-marker { display: none; }
+.facets__summary::after { content: "▾"; margin-left: auto; color: var(--muted); transition: transform 0.15s; }
+.facets:not([open]) .facets__summary::after { transform: rotate(-90deg); }
+.facets__summary:hover { color: var(--accent); }
+.facets__count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: #fff;
+  font-size: 0.8rem;
+  text-align: center;
+}
+.facets__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  gap: 12px;
+  padding: 0 14px 14px;
+}
+.facets__grid select { padding: 9px 12px; min-width: 0; }
+
+.active-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: -8px 0 20px; padding: 0; list-style: none; }
+.chip--removable { color: var(--text); white-space: normal; overflow-wrap: anywhere; min-height: 36px; }
+.chip--removable span[aria-hidden] { color: var(--muted); }
+.chip--removable:hover span[aria-hidden] { color: var(--accent); }
+.chip--removable:active { transform: translateY(1px); }
 
 .product-grid {
   display: grid;
