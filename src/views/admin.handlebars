@@ -4,7 +4,10 @@
       <p class="eyebrow">Administración</p>
       <h1>Productos</h1>
     </div>
-    <button class="btn btn--primary" type="button" data-new-product>+ Nuevo producto</button>
+    <div class="admin-head__actions">
+      <button class="btn" type="button" data-import-open>Importar JSON</button>
+      <button class="btn btn--primary" type="button" data-new-product>+ Nuevo producto</button>
+    </div>
   </header>
 
   <section class="stats" aria-label="Resumen del catálogo">
@@ -143,4 +146,54 @@
   </form>
 </dialog>
 
+<dialog class="modal modal--wide" id="import-dialog" aria-labelledby="import-dialog-title">
+  <div class="modal__form">
+    <header class="modal__head">
+      <h2 id="import-dialog-title">Importar productos</h2>
+      <button class="btn btn--icon btn--ghost" type="button" data-import-close aria-label="Cerrar">✕</button>
+    </header>
+
+    <ol class="import-steps">
+      <li>
+        <strong>Plantilla (opcional).</strong> Descarga un ejemplo con todos los campos de una categoría.
+        <div class="import-template">
+          <label class="sr-only" for="import-template-category">Categoría de la plantilla</label>
+          <select id="import-template-category" data-import-template-category>
+            {{#each categories}}<option value="{{this}}">{{categoryLabel this}}</option>{{/each}}
+          </select>
+          <button class="btn btn--sm btn--ghost" type="button" data-import-template>Descargar plantilla</button>
+        </div>
+      </li>
+      <li>
+        <strong>Elige el archivo.</strong> Una lista de productos en JSON. Si el código ya existe, se actualiza solo lo que trae el archivo.
+        <div class="thumb-upload">
+          <input class="sr-only" id="import-file" type="file" accept=".json,application/json" aria-describedby="import-file-hint" data-import-file />
+          <label class="btn btn--sm" for="import-file">Elegir archivo .json</label>
+          <span class="field__hint" id="import-file-hint" data-import-file-name>Hasta 200 productos y 1 MB.</span>
+        </div>
+      </li>
+      <li><strong>Revisa la vista previa y confirma.</strong> Nada se guarda hasta que confirmes.</li>
+    </ol>
+
+    <section class="import-preview" data-import-preview hidden aria-live="polite">
+      <ul class="import-summary" data-import-summary></ul>
+      <div class="table-wrap">
+        <table class="table table--compact">
+          <thead>
+            <tr><th scope="col" class="num">Fila</th><th scope="col">Código</th><th scope="col">Producto</th><th scope="col">Resultado</th></tr>
+          </thead>
+          <tbody data-import-rows></tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="form-error" data-import-error role="alert"></p>
+    <footer class="modal__foot">
+      <button class="btn btn--ghost" type="button" data-import-close>Cancelar</button>
+      <button class="btn btn--primary" type="button" data-import-confirm disabled>Confirmar importación</button>
+    </footer>
+  </div>
+</dialog>
+
 <script src="/js/admin.js" type="module"></script>
+<script src="/js/catalogImport.js" type="module"></script>

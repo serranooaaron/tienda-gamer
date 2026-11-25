@@ -25,6 +25,9 @@ app.use(securityHeaders);
 // Detrás del proxy de la plataforma (Render), req.ip sería siempre la IP del proxy:
 // TRUST_PROXY indica cuántos saltos de proxy creer para leer la IP real del visitante.
 if (process.env.TRUST_PROXY) app.set("trust proxy", Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
+// La importación de catálogo recibe hasta 200 productos: su propio límite, más alto que el
+// del resto de la API. Va antes del parser general, que no vuelve a leer un cuerpo ya leído.
+app.use("/api/products/import", express.json({ limit: "1mb" }));
 app.use(express.json({ limit: "100kb" }));
 app.use(cookieParser());
 app.use(express.static(__dirname + "/public"));

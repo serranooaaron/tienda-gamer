@@ -629,6 +629,19 @@ h1, h2 { text-wrap: balance; }
 
 /* ===================== Administracion ===================== */
 .admin-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.admin-head__actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Importar JSON: pasos, vista previa con resumen y una fila por producto */
+.modal--wide { width: min(880px, calc(100vw - 32px)); }
+.import-steps { display: grid; gap: 14px; margin: 0; padding-left: 20px; color: var(--muted); }
+.import-steps strong { color: var(--text); }
+.import-template { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+.import-template select { min-width: 0; max-width: 100%; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--bg-2); color: var(--text); font: inherit; }
+.import-preview { display: grid; gap: 12px; }
+.import-summary { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.table--compact { min-width: 560px; }
+.table--compact th, .table--compact td { padding: 8px 12px; }
+.table--compact td small { color: var(--muted); overflow-wrap: anywhere; }
 
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
 .stat {
