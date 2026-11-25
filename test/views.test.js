@@ -57,6 +57,14 @@ describe("Vistas", () => {
       await admin.agent.get("/admin").expect(200);
     });
 
+    it("el formulario del panel tiene tipo, marca, modelo, garantía y lugar para la ficha", async () => {
+      const admin = await loginAs("admin");
+      const res = await admin.agent.get("/admin").expect(200);
+      for (const text of ['id="f-subcategory"', 'id="f-brand"', 'id="f-model"', 'name="warrantyMonths"', "data-spec-fields", 'src="/js/admin.js"']) {
+        expect(res.text).to.include(text);
+      }
+    });
+
     it("el panel escapa los datos de los productos", async () => {
       const admin = await loginAs("admin");
       await createProduct({ title: `Mouse '"><img src=x onerror=alert(1)>` });

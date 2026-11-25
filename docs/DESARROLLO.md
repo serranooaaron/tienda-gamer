@@ -26,6 +26,59 @@ Un patrón que se repite: **los módulos que necesitan el servidor y el navegado
 
 ---
 
+## Ficha técnica en el formulario del panel (25/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| Campos Tipo, Marca, Modelo y Garantía | `src/views/admin.handlebars` | Los datos del catálogo que antes solo se podían cargar por la API |
+| Sección "Ficha técnica" | mismo archivo | Contenedor que el navegador llena según la categoría |
+| `productCatalogFields(form)` | `public/js/productForm.js` | Arma tipo, marca y ficha desde `CATEGORIES`, los llena al editar y los lee al guardar |
+| Validación antes de enviar | `public/js/admin.js` | Corre `checkCategoryFields` y `cleanSpecs`, las mismas funciones que el servidor |
+| Estilos de la ficha | `public/css/styles.css` | Una sección (`<fieldset>`) por grupo de la ficha, en grilla que se adapta al ancho |
+
+### Cómo funciona
+
+1. Al abrir el formulario, `load(product)`:
+   - llena los menús de Tipo y Marca con los de la categoría;
+   - crea un control por campo de la ficha, agrupados en `<fieldset>` con su `<legend>`.
+   Según el tipo del campo, el control es:
+   - **`select`:** un menú con sus opciones y "—" para "sin dato".
+   - **`boolean`:** un menú Sí / No / —, porque "no sé" no es lo mismo que "No".
+   - **`number`:** texto con teclado decimal (`inputmode="decimal"`) que acepta coma, igual que el servidor. La unidad va en la etiqueta: "Peso (g)".
+   - **`text`:** texto de hasta 80 caracteres.
+2. Al cambiar la categoría, todo se rearma y se conservan los valores que existen en la nueva y siguen siendo válidos. Por ejemplo, "RGB" o "Conexión" al pasar de mouse a auriculares.
+3. Al guardar, `read()` junta los valores no vacíos, convierte Sí/No en `true`/`false` y corre `checkCategoryFields` y `cleanSpecs`.
+   - Si algo falla, el mensaje es el mismo que daría el servidor ("Peso: debe ser un número").
+   - `markInvalid` marca ese campo con `aria-invalid="true"` y le pasa el foco.
+4. Se envía la ficha completa. En una edición reemplaza a la anterior, así que un campo que se vacía se borra.
+
+### Por qué
+
+- **La definición del catálogo arma el formulario:** sumar un campo o una marca en `catalogSchema.js` lo agrega a la validación, a la página del producto, a los filtros y ahora también al panel, sin tocar HTML.
+- **Validar en el navegador con el mismo código:** el error aparece al instante junto al campo y no puede ser distinto del que da la API. La API igual valida todo, porque el navegador se puede saltear.
+- **Sí/No como menú y no como casilla:** una casilla sin marcar se lee como "No". Con el menú, "—" deja el dato vacío y no aparece en la tienda.
+- **Números como texto con teclado decimal:** `type="number"` rechaza la coma en algunos navegadores con idioma inglés y muestra flechas que no sirven para un peso o una frecuencia.
+
+### Límites conocidos
+
+- Los campos de la ficha no se marcan como obligatorios: todo es opcional, como en el servidor.
+- El error del servidor se muestra arriba del botón Guardar y no se ubica en un campo; solo los errores que se detectan en el navegador marcan el campo.
+
+### Tests
+
+- `test/views.test.js`: el panel tiene Tipo, Marca, Modelo, Garantía y el contenedor de la ficha.
+- `test/catalog.test.js`: la API acepta lo que envía el formulario: números como texto con coma, Sí/No, tipo vacío (`null`) y garantía vacía.
+- En el navegador:
+  - alta de un monitor con marca, tipo, modelo, garantía y 7 campos;
+  - error "Peso: debe ser un número" con el foco en el campo;
+  - edición que carga todos los valores;
+  - sin desbordes a 375 px;
+  - contraste de los títulos de sección de 6,18:1.
+
+---
+
 ## Filtros del catálogo (20/11/2026)
 
 ### Qué se agregó
