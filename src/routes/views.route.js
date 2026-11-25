@@ -13,6 +13,7 @@ import { CATEGORY_LABELS } from "../utils/handlebars.js";
 import { listUploadedImages } from "../utils/uploader.js";
 import { passwordChecks } from "../../public/js/passwordPolicy.js";
 import { specSheet } from "../../public/js/catalogSchema.js";
+import { clearInterests, readInterests, recordInterest, topInterest } from "../utils/interests.js";
 
 const categoryLabel = (value) => CATEGORY_LABELS[value] || value;
 
@@ -67,10 +68,13 @@ const seenProducts = (req) =>
     .filter((id) => /^[a-f0-9]{24}$/.test(id))
     .slice(-SEEN_MAX);
 
+// Un visitante real: ni el administrador revisando la tienda ni un bot.
+const isVisitor = (req) => req.user?.role !== "admin" && !NOT_A_VISITOR.test(req.get("user-agent") || "");
+
 const countView = async (req, res, productId) => {
   const id = String(productId);
   const seen = seenProducts(req);
-  if (req.user?.role === "admin" || NOT_A_VISITOR.test(req.get("user-agent") || "") || seen.includes(id)) return;
+  if (!isVisitor(req) || seen.includes(id)) return;
   await Product.updateOne({ _id: productId }, { $inc: { views: 1 } });
   res.cookie(SEEN_COOKIE, [...seen, id].slice(-SEEN_MAX).join("."), {
     httpOnly: true,
@@ -108,17 +112,49 @@ const pickHero = async () =>
   (await Product.findOne({ ...forSale(), views: mongoose.trusted({ $gt: 0 }) }).sort({ views: -1, price: -1 }).lean()) ||
   (await Product.findOne(forSale()).sort({ price: -1 }).lean());
 
-viewsRouter.get("/", async (_req, res) => {
+// "Porque viste Teclados": productos a la venta de la categoría que más mira el visitante,
+// primero los de sus marcas más vistas y después los más vistos por todos.
+const RECOMMENDED = 4;
+const pickRecommended = async (interest, excludeId) => {
+  if (!interest) return null;
+  const candidates = await Product.find({
+    ...forSale(),
+    category: interest.category,
+    ...(excludeId ? { _id: mongoose.trusted({ $ne: excludeId }) } : {}),
+  })
+    .sort({ views: -1, price: -1 })
+    .limit(24)
+    .lean();
+  if (!candidates.length) return null;
+  const products = candidates
+    .map((product, index) => ({ product, brandScore: interest.brands.get(product.brand) ?? 0, index }))
+    .sort((a, b) => b.brandScore - a.brandScore || a.index - b.index)
+    .slice(0, RECOMMENDED)
+    .map(({ product }) => product);
+  return { category: interest.category, products };
+};
+
+viewsRouter.get("/", async (req, res) => {
   try {
     const [hero, categories] = await Promise.all([pickHero(), getCategoriesWithCount()]);
     // Destacados: el de la imagen grande primero y después los más vistos.
-    const others = await Product.find({ ...forSale(), ...(hero ? { _id: mongoose.trusted({ $ne: hero._id }) } : {}) })
-      .sort({ views: -1, price: -1 })
-      .limit(hero ? 3 : 4)
-      .lean();
+    const [others, recommended] = await Promise.all([
+      Product.find({ ...forSale(), ...(hero ? { _id: mongoose.trusted({ $ne: hero._id }) } : {}) })
+        .sort({ views: -1, price: -1 })
+        .limit(hero ? 3 : 4)
+        .lean(),
+      pickRecommended(topInterest(readInterests(req)), hero?._id),
+    ]);
     const featured = hero ? [hero, ...others] : others;
     // Una tarjeta "0 productos" lleva a una página vacía: solo se muestran las que tienen algo.
-    return res.render("index", { hero, featured, categories: categories.filter((c) => c.count > 0) });
+    return res.render("index", {
+      hero,
+      featured,
+      // Recién borrados los intereses, la cookie vieja todavía viaja en esta petición.
+      recommended: req.query.olvidado === "1" ? null : recommended,
+      forgotten: req.query.olvidado === "1",
+      categories: categories.filter((c) => c.count > 0),
+    });
   } catch (error) {
     return renderError(res, 500, "No es posible mostrar la página de inicio");
   }
@@ -134,6 +170,8 @@ viewsRouter.get("/products", async (req, res) => {
     const available = req.query.available === "1";
     const limit = PAGE_SIZE_OPTIONS.includes(Number(req.query.limit)) ? Number(req.query.limit) : 12;
     const page = parsePositiveInt(req.query.page, 1);
+    // Entrar a una categoría también cuenta como interés (solo la primera página).
+    if (category && page === 1 && isVisitor(req)) recordInterest(req, res, { category });
 
     const filter = { status: true };
     if (category) filter.category = category;
@@ -207,6 +245,7 @@ viewsRouter.get("/products/:pid", async (req, res) => {
     const product = await Product.findOne({ _id: pid, status: true }).lean();
     if (!product) return renderError(res, 404, "Ese producto no existe o ya no está a la venta");
     await countView(req, res, product._id);
+    if (isVisitor(req)) recordInterest(req, res, { category: product.category, brand: product.brand });
 
     const related = await Product.find({ category: product.category, status: true, _id: mongoose.trusted({ $ne: product._id }) })
       .limit(4)
@@ -220,7 +259,14 @@ viewsRouter.get("/products/:pid", async (req, res) => {
   }
 });
 
-viewsRouter.get("/detail/:pid", (req, res) => res.redirect(301, `/products/${req.params.pid}`));
+// "Olvidar lo que miré": borra la cookie de intereses y vuelve al inicio.
+// Es POST para que un link o una imagen de otro sitio no pueda dispararlo.
+viewsRouter.post("/intereses/olvidar", (_req, res) => {
+  clearInterests(res);
+  return res.redirect(303, "/?olvidado=1");
+});
+
+viewsRouter.get("/detail/:pid",(req, res) => res.redirect(301, `/products/${req.params.pid}`));
 
 // El carrito que se muestra es siempre el del usuario logueado.
 viewsRouter.get("/cart", requireAuth, async (req, res) => {
@@ -334,6 +380,20 @@ viewsRouter.get("/admin", requireAdmin, async (req, res) => {
       ? { $or: [{ title: mongoose.trusted({ $regex: escapeRegex(q), $options: "i" }) }, { code: mongoose.trusted({ $regex: escapeRegex(q), $options: "i" }) }] }
       : {};
 
+    // Lo más visto: productos, y la suma de vistas por categoría y por marca.
+    // Son totales de la tienda; no dicen nada de ningún visitante en particular.
+    const viewsBy = (field) => [
+      { $match: { views: mongoose.trusted({ $gt: 0 }), [field]: mongoose.trusted({ $ne: null }) } },
+      { $group: { _id: `$${field}`, views: { $sum: "$views" } } },
+      { $sort: { views: -1, _id: 1 } },
+      { $limit: 5 },
+    ];
+    const [mostViewedProducts, mostViewedCategories, mostViewedBrands] = await Promise.all([
+      Product.find({ views: mongoose.trusted({ $gt: 0 }) }, { title: 1, views: 1 }).sort({ views: -1, title: 1 }).limit(5).lean(),
+      Product.aggregate(viewsBy("category")),
+      Product.aggregate(viewsBy("brand")),
+    ]);
+
     const [products, images, uploaded, stats] = await Promise.all([
       Product.find(filter).sort({ title: 1 }).lean(),
       readdir(path.join(__dirname, "public", "image")).catch(() => []),
@@ -357,6 +417,11 @@ viewsRouter.get("/admin", requireAdmin, async (req, res) => {
       products,
       q,
       stats: stats[0] || { total: 0, paused: 0, outOfStock: 0, units: 0, views: 0 },
+      mostViewed: {
+        products: mostViewedProducts,
+        categories: mostViewedCategories.map((row) => ({ label: categoryLabel(row._id), views: row.views })),
+        brands: mostViewedBrands.map((row) => ({ label: row._id, views: row.views })),
+      },
       categories: CATEGORIES,
       // Primero las subidas desde el panel (las más nuevas arriba) y después las de fábrica.
       images: [

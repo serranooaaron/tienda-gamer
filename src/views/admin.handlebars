@@ -15,6 +15,28 @@
     <div class="stat"><span>Vistas totales</span><strong>{{stats.views}}</strong></div>
   </section>
 
+  <section class="most-viewed" aria-labelledby="most-viewed-title">
+    <h2 class="sr-only" id="most-viewed-title">Lo más visto</h2>
+    <div class="most-viewed__card">
+      <h3>Productos más vistos</h3>
+      {{#if mostViewed.products.length}}
+        <ol>{{#each mostViewed.products}}<li>{{title}} <span>· {{views}} {{#if (eq views 1)}}vista{{else}}vistas{{/if}}</span></li>{{/each}}</ol>
+      {{else}}<p class="field__hint">Todavía nadie vio un producto.</p>{{/if}}
+    </div>
+    <div class="most-viewed__card">
+      <h3>Categorías más vistas</h3>
+      {{#if mostViewed.categories.length}}
+        <ol>{{#each mostViewed.categories}}<li>{{label}} <span>· {{views}} {{#if (eq views 1)}}vista{{else}}vistas{{/if}}</span></li>{{/each}}</ol>
+      {{else}}<p class="field__hint">Sin vistas todavía.</p>{{/if}}
+    </div>
+    <div class="most-viewed__card">
+      <h3>Marcas más vistas</h3>
+      {{#if mostViewed.brands.length}}
+        <ol>{{#each mostViewed.brands}}<li>{{label}} <span>· {{views}} {{#if (eq views 1)}}vista{{else}}vistas{{/if}}</span></li>{{/each}}</ol>
+      {{else}}<p class="field__hint">Sin vistas de productos con marca todavía.</p>{{/if}}
+    </div>
+  </section>
+
   <form class="toolbar" method="GET" action="/admin" role="search">
     <div class="toolbar__search">
       <label class="sr-only" for="admin-q">Buscar producto</label>
