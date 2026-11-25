@@ -12,6 +12,8 @@ import { requireAdmin, requireAuth } from "../middlewares/auth.middleware.js";
 import { CATEGORY_LABELS } from "../utils/handlebars.js";
 import { listUploadedImages } from "../utils/uploader.js";
 import { passwordChecks } from "../../public/js/passwordPolicy.js";
+import { findValidReset } from "../utils/passwordReset.js";
+import User from "../models/user.model.js";
 import { specSheet } from "../../public/js/catalogSchema.js";
 import { confirmPayment } from "../services/payments.service.js";
 import { PaymentError, paymentsConfigured } from "../services/mercadoPago.js";
@@ -419,6 +421,29 @@ const authPage = (view, title) => (req, res) => {
 
 viewsRouter.get("/login", authPage("login", "Ingresar"));
 viewsRouter.get("/register", authPage("register", "Crear cuenta"));
+
+// Olvidé mi contraseña: pedir el link por email.
+viewsRouter.get("/recuperar", (req, res) => res.render("forgot", { title: "Recuperar contraseña" }));
+
+// Link del email: si el token sigue vigente, formulario para la contraseña nueva.
+// no-referrer: el token está en la URL y no tiene que viajar a ningún otro sitio.
+viewsRouter.get("/restablecer", async (req, res) => {
+  try {
+    res.set("Referrer-Policy", "no-referrer");
+    const token = typeof req.query.token === "string" ? req.query.token : "";
+    const pending = await findValidReset(token);
+    const owner = pending ? await User.findById(pending.user).lean() : null;
+    return res.render("reset", {
+      title: "Crear contraseña nueva",
+      valid: Boolean(owner),
+      token,
+      person: owner ? { email: owner.email, first_name: owner.first_name, last_name: owner.last_name } : null,
+      passwordRules: passwordChecks("").map(({ id, label }) => ({ id, label })),
+    });
+  } catch (error) {
+    return renderError(res, 500, "No es posible mostrar esta página");
+  }
+});
 
 // Panel de administracion: lista todos los productos (incluso pausados) para gestionarlos.
 viewsRouter.get("/admin", requireAdmin, async (req, res) => {

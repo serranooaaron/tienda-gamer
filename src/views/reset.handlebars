@@ -1,0 +1,31 @@
+<main class="container auth">
+  <section class="auth__card">
+    <p class="eyebrow">Recuperar acceso</p>
+    <h1>Crear contraseña nueva</h1>
+
+    {{#if valid}}
+      <p class="auth__lead">Al guardarla se cierran todas las sesiones abiertas de tu cuenta.</p>
+      <form class="auth__form" data-reset-form data-email="{{person.email}}" data-first-name="{{person.first_name}}" data-last-name="{{person.last_name}}" novalidate>
+        <input type="hidden" name="token" value="{{token}}" />
+        <div class="field">
+          <label for="newPassword">Contraseña nueva</label>
+          <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" minlength="10" required aria-describedby="password-rules" data-password />
+          <ul class="password-rules" id="password-rules" data-password-rules aria-label="Requisitos de la contraseña">
+            {{#each passwordRules}}
+              <li data-rule="{{id}}"><span class="password-rules__icon" aria-hidden="true"></span><span>{{label}}</span><span class="sr-only" data-rule-state>: falta</span></li>
+            {{/each}}
+          </ul>
+        </div>
+        <p class="form-error" data-form-error role="alert"></p>
+        <button class="btn btn--primary btn--block" type="submit">Guardar contraseña</button>
+      </form>
+      <p class="notice notice--ok" data-form-done role="status" hidden></p>
+      <div class="auth__actions" data-login-link hidden><a class="btn btn--primary btn--block" href="/login">Ingresar</a></div>
+    {{else}}
+      <p class="notice notice--error" role="alert">El link venció o ya se usó. Los links sirven una sola vez y duran 30 minutos.</p>
+      <div class="auth__actions"><a class="btn btn--primary btn--block" href="/recuperar">Pedir un link nuevo</a></div>
+    {{/if}}
+  </section>
+</main>
+
+<script src="/js/recover.js" type="module"></script>

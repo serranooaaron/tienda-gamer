@@ -665,6 +665,14 @@ h1, h2 { text-wrap: balance; }
 .auth__row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .auth__switch { margin-top: 20px; text-align: center; color: var(--muted); }
 .auth__switch a { color: var(--accent-2); font-weight: 700; }
+.auth__switch--tight { margin-top: 14px; }
+.auth__actions { margin-top: 18px; }
+.auth__actions[hidden], .auth__form[hidden] { display: none; }
+/* Recuperar contraseña: el aviso recibe el foco al aparecer, sin dibujar un borde de más */
+.auth__card .notice[hidden] { display: none; }
+.auth__card .notice:focus { outline: none; }
+.auth__card .notice:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 2px; }
+.notice--error { color: #fca5a5; background: rgb(239 68 68 / 0.1); border-color: rgb(239 68 68 / 0.35); margin-bottom: 4px; }
 .field__hint { color: var(--muted); font-size: 0.8rem; }
 
 /* ===================== Administracion ===================== */

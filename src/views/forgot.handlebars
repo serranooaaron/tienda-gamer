@@ -1,0 +1,21 @@
+<main class="container auth">
+  <section class="auth__card">
+    <p class="eyebrow">Recuperar acceso</p>
+    <h1>¿Olvidaste tu contraseña?</h1>
+    <p class="auth__lead">Escribe el email de tu cuenta y te enviamos un link para crear una contraseña nueva.</p>
+
+    <form class="auth__form" data-forgot-form novalidate>
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" autocomplete="email" required maxlength="254" />
+      </div>
+      <p class="form-error" data-form-error role="alert"></p>
+      <button class="btn btn--primary btn--block" type="submit">Enviar link</button>
+    </form>
+    <p class="notice notice--ok" data-form-done role="status" hidden></p>
+
+    <p class="auth__switch"><a href="/login">Volver a ingresar</a></p>
+  </section>
+</main>
+
+<script src="/js/recover.js" type="module"></script>
