@@ -101,6 +101,133 @@ En `test/import.test.js` (8 tests):
 
 ---
 
+## Ficha técnica en el formulario del panel (25/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| Campos Tipo, Marca, Modelo y Garantía | `src/views/admin.handlebars` | Los datos del catálogo que antes solo se podían cargar por la API |
+| Sección "Ficha técnica" | mismo archivo | Contenedor que el navegador llena según la categoría |
+| `productCatalogFields(form)` | `public/js/productForm.js` | Arma tipo, marca y ficha desde `CATEGORIES`, los llena al editar y los lee al guardar |
+| Validación antes de enviar | `public/js/admin.js` | Corre `checkCategoryFields` y `cleanSpecs`, las mismas funciones que el servidor |
+| Estilos de la ficha | `public/css/styles.css` | Una sección (`<fieldset>`) por grupo de la ficha, en grilla que se adapta al ancho |
+
+### Cómo funciona
+
+1. Al abrir el formulario, `load(product)`:
+   - llena los menús de Tipo y Marca con los de la categoría;
+   - crea un control por campo de la ficha, agrupados en `<fieldset>` con su `<legend>`.
+   Según el tipo del campo, el control es:
+   - **`select`:** un menú con sus opciones y "—" para "sin dato".
+   - **`boolean`:** un menú Sí / No / —, porque "no sé" no es lo mismo que "No".
+   - **`number`:** texto con teclado decimal (`inputmode="decimal"`) que acepta coma, igual que el servidor. La unidad va en la etiqueta: "Peso (g)".
+   - **`text`:** texto de hasta 80 caracteres.
+2. Al cambiar la categoría, todo se rearma y se conservan los valores que existen en la nueva y siguen siendo válidos. Por ejemplo, "RGB" o "Conexión" al pasar de mouse a auriculares.
+3. Al guardar, `read()` junta los valores no vacíos, convierte Sí/No en `true`/`false` y corre `checkCategoryFields` y `cleanSpecs`.
+   - Si algo falla, el mensaje es el mismo que daría el servidor ("Peso: debe ser un número").
+   - `markInvalid` marca ese campo con `aria-invalid="true"` y le pasa el foco.
+4. Se envía la ficha completa. En una edición reemplaza a la anterior, así que un campo que se vacía se borra.
+
+### Por qué
+
+- **La definición del catálogo arma el formulario:** sumar un campo o una marca en `catalogSchema.js` lo agrega a la validación, a la página del producto, a los filtros y ahora también al panel, sin tocar HTML.
+- **Validar en el navegador con el mismo código:** el error aparece al instante junto al campo y no puede ser distinto del que da la API. La API igual valida todo, porque el navegador se puede saltear.
+- **Sí/No como menú y no como casilla:** una casilla sin marcar se lee como "No". Con el menú, "—" deja el dato vacío y no aparece en la tienda.
+- **Números como texto con teclado decimal:** `type="number"` rechaza la coma en algunos navegadores con idioma inglés y muestra flechas que no sirven para un peso o una frecuencia.
+
+### Límites conocidos
+
+- Los campos de la ficha no se marcan como obligatorios: todo es opcional, como en el servidor.
+- El error del servidor se muestra arriba del botón Guardar y no se ubica en un campo; solo los errores que se detectan en el navegador marcan el campo.
+
+### Tests
+
+- `test/views.test.js`: el panel tiene Tipo, Marca, Modelo, Garantía y el contenedor de la ficha.
+- `test/catalog.test.js`: la API acepta lo que envía el formulario: números como texto con coma, Sí/No, tipo vacío (`null`) y garantía vacía.
+- En el navegador:
+  - alta de un monitor con marca, tipo, modelo, garantía y 7 campos;
+  - error "Peso: debe ser un número" con el foco en el campo;
+  - edición que carga todos los valores;
+  - sin desbordes a 375 px;
+  - contraste de los títulos de sección de 6,18:1.
+
+---
+
+## Filtros del catálogo (20/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| `filter: true` en 27 campos de la ficha | `public/js/catalogSchema.js` | Marca qué campos ofrece filtrar cada categoría (conexión, socket, panel, resolución, RGB…) |
+| `filterFields(category)` | mismo archivo | Lista los campos filtrables de una categoría |
+| `readCatalogFilters(query, category)` | `src/utils/catalogFilters.js` | Lee los filtros de la URL y descarta los que no son válidos |
+| `filtersToMatch(filters, category, except)` | mismo archivo | Convierte los filtros elegidos en condiciones de Mongo |
+| `catalogFacets(Product, base, filters, category)` | mismo archivo | Opciones de cada filtro con la cantidad de productos, en una sola consulta |
+| `RESERVED_PARAMS` | mismo archivo | Parámetros que ya usa `/products`; un test impide que un campo filtrable se llame igual |
+| Bloque "Filtros" y filtros aplicados | `src/views/home.handlebars`, `public/css/styles.css` | Un menú por filtro y un chip "Marca: Razer ✕" para quitar cada uno |
+| Envío automático y URL limpia | `public/js/filters.js` | Aplica el filtro al elegirlo, saca los campos vacíos de la URL y pliega los filtros en celular |
+
+### Cómo funciona
+
+1. La URL lleva un parámetro por filtro, con nombre legible: `/products?category=mouse&brand=Razer&sub=inalambricos&connection=Bluetooth&rgb=si`.
+   - `brand` es la marca y `sub` la subcategoría.
+   - Los campos de la ficha usan su propia clave.
+   - Los sí/no se escriben `si` y `no`.
+2. `readCatalogFilters` arma, para la categoría elegida, la lista de filtros posibles con sus opciones, en el orden de la definición del catálogo. Se queda solo con los parámetros que son texto y coinciden exactamente con una opción.
+   - Sin categoría, el único filtro es la marca, con la lista de todas las marcas.
+3. La consulta se arma en dos partes:
+   - **Base:** publicado, categoría, búsqueda y stock.
+   - **Filtros:** `filtersToMatch` traduce cada uno al campo de Mongo que le corresponde (`brand`, `subcategory` o `specs.<clave>`) y al valor guardado (`true`/`false` para los sí/no).
+   El listado paginado usa la base más los filtros.
+4. `catalogFacets` corre una sola agregación: `$match` con la base y un `$facet` con una rama por filtro. Cada rama aplica **todos los filtros menos el suyo** y agrupa por su campo.
+   - Así, con Razer elegida, el menú de marca sigue mostrando "Logitech (1)" para cambiar de una a otra.
+   - Los demás menús cuentan solo dentro de Razer.
+5. Al armar las opciones se descartan las que tienen 0 productos, salvo la elegida. También se oculta todo filtro con una sola opción, porque no ayuda a elegir, salvo que ya esté aplicado.
+6. Los links mantienen los filtros: paginación, orden y quitar un filtro (que conserva los demás). Los chips de categoría los quitan, porque la marca o el socket de una categoría no tienen sentido en otra.
+7. En el navegador, `filters.js` hace tres cosas:
+   - Envía el formulario al cambiar un menú.
+   - En el evento `formdata`, saca los campos vacíos para que la URL no quede llena de parámetros vacíos.
+   - En pantallas de 640 px o menos, pliega el bloque `<details>` si no hay filtros aplicados.
+   Sin JavaScript, los filtros quedan abiertos y se aplican con el botón "Buscar".
+
+### Por qué
+
+- **Formulario GET y no una API con JavaScript:** el resultado es una URL que se puede compartir, guardar o abrir en otra pestaña, y que el botón "atrás" respeta. Funciona sin JavaScript y lo indexan los buscadores.
+- **Las claves de Mongo nunca vienen de la URL:** el nombre del campo consultado (`specs.connection`) sale de la definición del catálogo, y el valor tiene que coincidir con una opción conocida.
+  - Un parámetro como `specs.dpi=1` o `brand[$ne]=x` se ignora, y además `sanitizeFilter` sigue activo.
+  - Por eso no hace falta ningún operador de Mongo armado con datos del usuario.
+- **Valores inválidos se ignoran, no dan error:** un link viejo o mal escrito muestra el catálogo sin ese filtro en lugar de una página de error.
+- **Conteos sin el filtro propio:** es lo que hacen las tiendas de referencia. Si cada menú contara con su propio filtro aplicado, elegir Razer dejaría el menú de marca con una sola opción y habría que limpiar para cambiar.
+- **Una sola agregación con `$facet`:** con 6 filtros serían 6 consultas; así es una, y la base (`status`, `category`) usa los índices `{ category, brand }` y `{ category, subcategory }`.
+- **Solo listas cerradas y sí/no:** un filtro de texto libre mostraría variantes del mismo valor escritas distinto. Los números (memoria, Hz, DPI) necesitan rangos, que quedan para más adelante.
+- **`<details>` para plegar:** es nativo, se maneja con teclado y anuncia su estado a los lectores de pantalla sin ARIA extra. El resumen mide 44 px de alto para tocarlo cómodo.
+
+### Límites conocidos
+
+- No hay filtros por rango (precio, memoria, frecuencia) ni de selección múltiple (dos marcas a la vez).
+- Los filtros de la ficha consultan `specs.<clave>` sin índice propio: se apoyan en el índice por categoría. Alcanza para un catálogo de cientos de productos; con miles habría que indexar los campos más usados.
+- El conteo de los chips de categoría no tiene en cuenta la búsqueda ni los filtros.
+
+### Tests
+
+En `test/filters.test.js` (11 tests):
+
+- Lectura de la URL:
+  - acepta valores de la lista;
+  - ignora la marca de otra categoría, los parámetros repetidos, los operadores, los nombres heredados (`constructor`), los campos que no son filtro, `rgb=true` y los textos de 10.000 caracteres.
+- Ningún campo filtrable choca con `RESERVED_PARAMS`.
+- Filtrado por marca, tipo, ficha y sí/no.
+- Conteos sin el filtro propio y sin opciones vacías.
+- Filtros aplicados con link para quitar cada uno.
+- Los chips de categoría quitan los filtros y la paginación los conserva.
+- Las URL maliciosas no rompen la página ni muestran HTML sin escapar.
+- Los productos sin marca se siguen listando.
+- Sin categoría, solo aparece el filtro de marca.
+
+---
+
 ## Tests automáticos en GitHub y pull requests (18/11/2026)
 
 ### Qué se agregó

@@ -1,7 +1,9 @@
 import { api, confirmDialog, toast } from "./app.js";
+import { productCatalogFields } from "./productForm.js";
 
 const dialog = document.getElementById("product-dialog");
 const form = document.getElementById("product-form");
+const catalog = productCatalogFields(form);
 const errorEl = form.querySelector("[data-form-error]");
 const preview = document.getElementById("f-thumbnail-preview");
 const thumbSelect = form.elements.thumbnail;
@@ -68,12 +70,13 @@ const openForm = (product) => {
   errorEl.textContent = "";
   document.getElementById("product-dialog-title").textContent = editingId ? "Editar producto" : "Nuevo producto";
   if (product) {
-    for (const name of ["title", "code", "category", "price", "stock", "description", "thumbnail"]) {
+    for (const name of ["title", "code", "category", "price", "stock", "description", "thumbnail", "model", "warrantyMonths"]) {
       if (form.elements[name]) form.elements[name].value = product[name] ?? "";
     }
     form.elements.status.checked = product.status;
     form.elements.featured.checked = Boolean(product.featured);
   }
+  catalog.load(product);
   updatePreview();
   dialog.showModal();
   form.elements.title.focus();
@@ -94,9 +97,22 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  // Tipo, marca y ficha se validan acá con las mismas reglas que el servidor, así el error
+  // aparece junto al campo antes de enviar.
+  let catalogData;
+  try {
+    catalogData = catalog.read();
+    catalog.markInvalid("");
+  } catch (error) {
+    errorEl.textContent = error.message;
+    catalog.markInvalid(error.message);
+    return;
+  }
+
   const data = Object.fromEntries(new FormData(form));
   const body = {
     ...data,
+    ...catalogData,
     price: Number(data.price),
     stock: Number(data.stock),
     status: form.elements.status.checked,

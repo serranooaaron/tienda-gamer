@@ -102,6 +102,22 @@
         </select>
       </div>
       <div class="field">
+        <label for="f-subcategory">Tipo</label>
+        <select id="f-subcategory" name="subcategory" data-subcategory></select>
+      </div>
+      <div class="field">
+        <label for="f-brand">Marca</label>
+        <select id="f-brand" name="brand" data-brand></select>
+      </div>
+      <div class="field">
+        <label for="f-model">Modelo</label>
+        <input id="f-model" name="model" maxlength="80" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="f-warranty">Garantía (meses)</label>
+        <input id="f-warranty" name="warrantyMonths" type="number" min="0" max="120" step="1" inputmode="numeric" />
+      </div>
+      <div class="field">
         <label for="f-price">Precio</label>
         <input id="f-price" name="price" type="number" min="0" step="1" required />
       </div>
@@ -127,6 +143,11 @@
           <span class="field__hint" id="f-image-hint" data-image-upload-status>PNG, JPG o WebP de hasta 2 MB.</span>
         </div>
       </div>
+      <section class="spec-form field--wide" aria-labelledby="spec-form-title">
+        <h3 class="spec-form__title" id="spec-form-title">Ficha técnica <small data-spec-category></small></h3>
+        <p class="field__hint">Completa lo que sepas: los campos vacíos no se muestran en la tienda.</p>
+        <div data-spec-fields></div>
+      </section>
       <label class="check field--wide">
         <input type="checkbox" name="status" checked />
         Publicado (visible en la tienda)
