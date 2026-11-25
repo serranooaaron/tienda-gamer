@@ -14,6 +14,7 @@ import { listUploadedImages } from "../utils/uploader.js";
 import { passwordChecks } from "../../public/js/passwordPolicy.js";
 import { specSheet } from "../../public/js/catalogSchema.js";
 import { clearInterests, readInterests, recordInterest, topInterest } from "../utils/interests.js";
+import { catalogFacets, filtersToMatch, readCatalogFilters } from "../utils/catalogFilters.js";
 
 const categoryLabel = (value) => CATEGORY_LABELS[value] || value;
 
@@ -173,26 +174,32 @@ viewsRouter.get("/products", async (req, res) => {
     // Entrar a una categoría también cuenta como interés (solo la primera página).
     if (category && page === 1 && isVisitor(req)) recordInterest(req, res, { category });
 
-    const filter = { status: true };
-    if (category) filter.category = category;
-    if (available) filter.stock = mongoose.trusted({ $gt: 0 });
+    const filters = readCatalogFilters(req.query, category);
+
+    // Base: lo que no es un filtro de la ficha (búsqueda, categoría, stock). Los filtros se
+    // suman aparte porque los conteos de cada uno se calculan sin su propio filtro.
+    const base = { status: true };
+    if (category) base.category = category;
+    if (available) base.stock = mongoose.trusted({ $gt: 0 });
     if (q) {
       const pattern = mongoose.trusted({ $regex: escapeRegex(q), $options: "i" });
-      filter.$or = [{ title: pattern }, { description: pattern }];
+      base.$or = [{ title: pattern }, { description: pattern }];
     }
+    const filter = { ...base, ...filtersToMatch(filters, category) };
 
     const options = { limit, page, lean: true };
     if (sort) options.sort = { price: sort === "asc" ? 1 : -1 };
 
-    const [data, categories] = await Promise.all([
+    const [data, categories, facets] = await Promise.all([
       Product.paginate(filter, options),
       getCategoriesWithCount(),
+      catalogFacets(Product, base, filters, category),
     ]);
 
     // Arma los links conservando los filtros actuales y cambiando solo lo indicado.
     const buildLink = (overrides) => {
       const params = new URLSearchParams();
-      const values = { q, category, sort, available: available ? "1" : "", limit: limit === 12 ? "" : limit, page: "", ...overrides };
+      const values = { q, category, ...filters, sort, available: available ? "1" : "", limit: limit === 12 ? "" : limit, page: "", ...overrides };
       for (const [key, value] of Object.entries(values)) if (value) params.set(key, value);
       const query = params.toString();
       return `/products${query ? `?${query}` : ""}`;
@@ -204,6 +211,13 @@ viewsRouter.get("/products", async (req, res) => {
       active: i + 1 === data.page,
     }));
 
+    // Al cambiar de categoría se quitan los filtros: la marca o el socket de una categoría
+    // no tienen sentido en otra.
+    const withoutFilters = Object.fromEntries(Object.keys(filters).map((name) => [name, ""]));
+    const activeFilters = facets
+      .filter((facet) => facet.selected)
+      .map((facet) => ({ label: `${facet.label}: ${facet.selected.label}`, link: buildLink({ [facet.name]: "" }) }));
+
     return res.render("home", {
       title: category ? categoryLabel(category) : "Productos",
       products: data.docs,
@@ -213,23 +227,25 @@ viewsRouter.get("/products", async (req, res) => {
       prevLink: data.hasPrevPage ? buildLink({ page: data.prevPage }) : null,
       nextLink: data.hasNextPage ? buildLink({ page: data.nextPage }) : null,
       categoryChips: [
-        { label: "Todos", link: buildLink({ category: "" }), active: !category },
+        { label: "Todos", link: buildLink({ category: "", ...withoutFilters }), active: !category },
         // Sin las categorías vacías, salvo la elegida (si alguien llega por un link, la ve marcada).
         ...categories.filter((c) => c.count > 0 || c.value === category).map((c) => ({
           label: categoryLabel(c.value),
           icon: c.icon,
           count: c.count,
-          link: buildLink({ category: c.value }),
+          link: buildLink({ category: c.value, ...withoutFilters }),
           active: c.value === category,
         })),
       ],
+      facets,
+      activeFilters,
       q,
       category,
       sort,
       available,
       limit,
       pageSizes: PAGE_SIZE_OPTIONS.map((value) => ({ value, selected: value === limit })),
-      hasFilters: Boolean(q || category || sort || available),
+      hasFilters: Boolean(q || category || sort || available || activeFilters.length),
     });
   } catch (error) {
     return renderError(res, 500, "No es posible mostrar los productos");

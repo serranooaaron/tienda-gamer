@@ -5,6 +5,7 @@ import { requireAdmin } from "../middlewares/auth.middleware.js";
 import { escapeRegex } from "../utils/regex.js";
 import { uploadProductImage } from "../utils/uploader.js";
 import { ProductInputError, applyCatalogRules, pickProductFields } from "../utils/productInput.js";
+import { applyImport, planImport, previewOf } from "../services/catalogImport.js";
 
 const productsRouter = express.Router();
 
@@ -66,6 +67,24 @@ const buildPageLink = (baseUrl, currentQuery, page) => {
 // Sube una imagen para usar como foto de un producto y devuelve su dirección pública.
 productsRouter.post("/images", requireAdmin, uploadProductImage, (req, res) => {
   res.status(201).json({ status: "success", payload: { url: req.imageUrl } });
+});
+
+// Importar productos desde un JSON: { products: [ ... ] }.
+// "preview" no guarda nada; la confirmación guarda solo si ninguna fila tiene errores.
+productsRouter.post("/import/preview", requireAdmin, async (req, res) => {
+  try {
+    res.json({ status: "success", payload: previewOf(await planImport(req.body?.products)) });
+  } catch (error) {
+    productErrorResponse(res, error, "No es posible revisar el archivo");
+  }
+});
+
+productsRouter.post("/import", requireAdmin, async (req, res) => {
+  try {
+    res.status(201).json({ status: "success", payload: await applyImport(req.body?.products) });
+  } catch (error) {
+    productErrorResponse(res, error, "No es posible importar el archivo");
+  }
 });
 
 productsRouter.post("/", requireAdmin, async (req, res) => {

@@ -1,0 +1,122 @@
+[
+  {
+    "code": "CPU-AMD-7800X3D",
+    "title": "Procesador AMD Ryzen 7 7800X3D",
+    "description": "Procesador de 8 núcleos con 3D V-Cache para juegos. Precio de ejemplo: revisar antes de publicar.",
+    "category": "procesadores", "subcategory": "amd-ryzen", "brand": "AMD", "model": "Ryzen 7 7800X3D",
+    "price": 650000, "stock": 0, "status": false, "warrantyMonths": 36,
+    "specs": { "socket": "AM5", "memoryType": "DDR5", "tdpW": 120, "cores": 8, "threads": 16, "baseGhz": 4.2, "boostGhz": 5, "l3CacheMb": 96, "integratedGraphics": true, "cooler": false }
+  },
+  {
+    "code": "CPU-AMD-7600",
+    "title": "Procesador AMD Ryzen 5 7600",
+    "description": "Procesador de 6 núcleos para AM5 con cooler incluido. Precio de ejemplo: revisar antes de publicar.",
+    "category": "procesadores", "subcategory": "amd-ryzen", "brand": "AMD", "model": "Ryzen 5 7600",
+    "price": 290000, "stock": 0, "status": false, "warrantyMonths": 36,
+    "specs": { "socket": "AM5", "memoryType": "DDR5", "tdpW": 65, "cores": 6, "threads": 12, "baseGhz": 3.8, "boostGhz": 5.1, "l3CacheMb": 32, "integratedGraphics": true, "cooler": true }
+  },
+  {
+    "code": "CPU-INTEL-14600K",
+    "title": "Procesador Intel Core i5-14600K",
+    "description": "Procesador de 14 núcleos desbloqueado para LGA1700. Precio de ejemplo: revisar antes de publicar.",
+    "category": "procesadores", "subcategory": "intel-core", "brand": "Intel", "model": "Core i5-14600K",
+    "price": 420000, "stock": 0, "status": false, "warrantyMonths": 36,
+    "specs": { "socket": "LGA1700", "memoryType": "DDR4 y DDR5", "tdpW": 125, "cores": 14, "threads": 20, "baseGhz": 3.5, "boostGhz": 5.3, "l3CacheMb": 24, "integratedGraphics": true, "cooler": false }
+  },
+  {
+    "code": "CPU-INTEL-12400F",
+    "title": "Procesador Intel Core i5-12400F",
+    "description": "Procesador de 6 núcleos sin gráficos integrados, con cooler. Precio de ejemplo: revisar antes de publicar.",
+    "category": "procesadores", "subcategory": "intel-core", "brand": "Intel", "model": "Core i5-12400F",
+    "price": 160000, "stock": 0, "status": false, "warrantyMonths": 36,
+    "specs": { "socket": "LGA1700", "memoryType": "DDR4 y DDR5", "tdpW": 65, "cores": 6, "threads": 12, "baseGhz": 2.5, "boostGhz": 4.4, "l3CacheMb": 18, "integratedGraphics": false, "cooler": true }
+  },
+  {
+    "code": "GPU-MSI-4060-VENTUS2X",
+    "title": "Placa de video MSI GeForce RTX 4060 Ventus 2X 8 GB",
+    "description": "Placa de video compacta de dos ventiladores para 1080p. Precio de ejemplo: revisar antes de publicar.",
+    "category": "placas-de-video", "subcategory": "nvidia-geforce", "brand": "MSI", "model": "RTX 4060 Ventus 2X Black 8G OC",
+    "price": 520000, "stock": 0, "status": false, "warrantyMonths": 36,
+    "specs": { "chip": "GeForce RTX 4060", "interface": "PCIe 4.0 x8", "memoryGb": 8, "memoryType": "GDDR6", "busBits": 128, "hdmi": 1, "displayPort": 3, "powerW": 115, "psuW": 550, "powerConnectors": "1 × 8 pines", "fans": 2 }
+  },
+  {
+    "code": "GPU-SAPPHIRE-7600-PULSE",
+    "title": "Placa de video Sapphire Pulse Radeon RX 7600 8 GB",
+    "description": "Placa de video AMD de dos ventiladores para 1080p. Precio de ejemplo: revisar antes de publicar.",
+    "category": "placas-de-video", "subcategory": "amd-radeon", "brand": "Sapphire", "model": "Pulse RX 7600 8GB",
+    "price": 450000, "stock": 0, "status": false, "warrantyMonths": 36,
+    "specs": { "chip": "Radeon RX 7600", "interface": "PCIe 4.0 x8", "memoryGb": 8, "memoryType": "GDDR6", "busBits": 128, "powerW": 165, "psuW": 550, "powerConnectors": "1 × 8 pines", "fans": 2 }
+  },
+  {
+    "code": "RAM-KINGSTON-FURY-D5-32",
+    "title": "Memoria Kingston FURY Beast DDR5 32 GB (2 × 16 GB) 6000 MHz",
+    "description": "Kit de dos módulos DDR5 para PC con disipador. Precio de ejemplo: revisar antes de publicar.",
+    "category": "memorias-ram", "subcategory": "ddr5", "brand": "Kingston", "model": "FURY Beast KF560C36BBEK2-32",
+    "price": 180000, "stock": 0, "status": false, "warrantyMonths": 120,
+    "specs": { "formFactor": "DIMM (PC)", "capacityGb": 32, "modules": "2 × módulos (kit)", "speedMhz": 6000, "latencyCl": 36, "voltage": 1.35, "heatsink": true, "rgb": false }
+  },
+  {
+    "code": "RAM-CORSAIR-LPX-D4-16",
+    "title": "Memoria Corsair Vengeance LPX DDR4 16 GB (2 × 8 GB) 3200 MHz",
+    "description": "Kit de dos módulos DDR4 de perfil bajo para PC. Precio de ejemplo: revisar antes de publicar.",
+    "category": "memorias-ram", "subcategory": "ddr4", "brand": "Corsair", "model": "Vengeance LPX CMK16GX4M2E3200C16",
+    "price": 60000, "stock": 0, "status": false, "warrantyMonths": 120,
+    "specs": { "formFactor": "DIMM (PC)", "capacityGb": 16, "modules": "2 × módulos (kit)", "speedMhz": 3200, "latencyCl": 16, "voltage": 1.35, "profile": "XMP", "heatsink": true, "rgb": false }
+  },
+  {
+    "code": "MB-MSI-B650-TOMAHAWK",
+    "title": "Motherboard MSI MAG B650 Tomahawk WiFi",
+    "description": "Motherboard ATX para AM5 con Wi-Fi y red de 2,5 Gbps. Precio de ejemplo: revisar antes de publicar.",
+    "category": "motherboards", "subcategory": "am5", "brand": "MSI", "model": "MAG B650 Tomahawk WiFi",
+    "price": 330000, "stock": 0, "status": false, "warrantyMonths": 36,
+    "specs": { "chipset": "AMD B650", "formFactor": "ATX", "memoryType": "DDR5", "memorySlots": 4, "m2Slots": 3, "sataPorts": 6, "wifi": "Wi-Fi 6E", "bluetooth": true, "lanGbps": 2.5 }
+  },
+  {
+    "code": "MB-ASUS-B760-TUF",
+    "title": "Motherboard ASUS TUF Gaming B760-Plus WiFi",
+    "description": "Motherboard ATX para LGA1700 con DDR5 y Wi-Fi. Precio de ejemplo: revisar antes de publicar.",
+    "category": "motherboards", "subcategory": "lga1700", "brand": "Asus", "model": "TUF Gaming B760-Plus WiFi",
+    "price": 280000, "stock": 0, "status": false, "warrantyMonths": 36,
+    "specs": { "chipset": "Intel B760", "formFactor": "ATX", "memoryType": "DDR5", "memorySlots": 4, "wifi": "Wi-Fi 6", "bluetooth": true, "lanGbps": 2.5 }
+  },
+  {
+    "code": "GAB-NZXT-H5-FLOW",
+    "title": "Gabinete NZXT H5 Flow",
+    "description": "Gabinete Mid Tower con frente perforado y dos ventiladores. Precio de ejemplo: revisar antes de publicar.",
+    "category": "gabinetes", "subcategory": "atx", "brand": "NZXT", "model": "H5 Flow",
+    "price": 140000, "stock": 0, "status": false, "warrantyMonths": 24,
+    "specs": { "formFactor": "Mid Tower", "motherboards": "ATX, Micro-ATX, Mini-ITX", "sidePanel": "Vidrio templado", "fansIncluded": 2, "maxCoolerMm": 165, "maxGpuMm": 365, "rgb": false }
+  },
+  {
+    "code": "GAB-CORSAIR-4000D-AF",
+    "title": "Gabinete Corsair 4000D Airflow",
+    "description": "Gabinete Mid Tower con buen flujo de aire y vidrio templado. Precio de ejemplo: revisar antes de publicar.",
+    "category": "gabinetes", "subcategory": "atx", "brand": "Corsair", "model": "4000D Airflow",
+    "price": 150000, "stock": 0, "status": false, "warrantyMonths": 24,
+    "specs": { "formFactor": "Mid Tower", "motherboards": "ATX, Micro-ATX, Mini-ITX", "sidePanel": "Vidrio templado", "fansIncluded": 2, "maxCoolerMm": 170, "maxGpuMm": 360, "rgb": false }
+  },
+  {
+    "code": "MON-SAMSUNG-G5-27",
+    "title": "Monitor Samsung Odyssey G5 27 pulgadas curvo",
+    "description": "Monitor gamer curvo 2K de 144 Hz con panel VA. Precio de ejemplo: revisar antes de publicar.",
+    "category": "monitores", "subcategory": "gaming", "brand": "Samsung", "model": "Odyssey G5 LC27G55T",
+    "price": 380000, "stock": 0, "status": false, "warrantyMonths": 12,
+    "specs": { "sizeIn": 27, "resolution": "2560 × 1440 (2K)", "panel": "VA", "curved": true, "refreshHz": 144, "responseMs": 1, "hdr": "HDR10", "sync": "FreeSync", "hdmi": 1, "displayPort": 1 }
+  },
+  {
+    "code": "MON-LG-27GN800",
+    "title": "Monitor LG UltraGear 27GN800 27 pulgadas",
+    "description": "Monitor gamer 2K de 144 Hz con panel IPS. Precio de ejemplo: revisar antes de publicar.",
+    "category": "monitores", "subcategory": "gaming", "brand": "LG", "model": "27GN800-B",
+    "price": 400000, "stock": 0, "status": false, "warrantyMonths": 12,
+    "specs": { "sizeIn": 27, "resolution": "2560 × 1440 (2K)", "panel": "IPS", "curved": false, "refreshHz": 144, "responseMs": 1, "hdr": "HDR10", "sync": "FreeSync y G-Sync", "hdmi": 2, "displayPort": 1 }
+  },
+  {
+    "code": "MON-AOC-24B2XH",
+    "title": "Monitor AOC 24B2XH 24 pulgadas",
+    "description": "Monitor Full HD IPS para oficina con HDMI y VGA. Precio de ejemplo: revisar antes de publicar.",
+    "category": "monitores", "subcategory": "oficina", "brand": "AOC", "model": "24B2XH",
+    "price": 170000, "stock": 0, "status": false, "warrantyMonths": 12,
+    "specs": { "sizeIn": 23.8, "resolution": "1920 × 1080 (Full HD)", "panel": "IPS", "curved": false, "hdmi": 1, "vga": true }
+  }
+]

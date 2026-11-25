@@ -99,6 +99,208 @@ En `test/interests.test.js` (12 tests):
 
 ---
 
+## Importar productos desde JSON (25/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| `planImport(rows)` | `src/services/catalogImport.js` | Revisa cada fila y dice si se crea, se actualiza, no cambia o tiene un error, sin guardar nada |
+| `applyImport(rows)` | mismo archivo | Vuelve a revisar todo y guarda con un solo `bulkWrite`, solo si no hay errores |
+| `previewOf(plan)` | mismo archivo | Lo que ve el navegador: resumen y filas, sin los datos completos |
+| `POST /api/products/import/preview` y `POST /api/products/import` | `src/routes/products.route.js` | Vista previa y confirmación, solo para administradores. Cuerpo `{ products: [...] }` |
+| Límite propio de 1 MB | `src/app.js` | La importación recibe hasta 200 productos; el resto de la API sigue en 100 KB |
+| Diálogo "Importar JSON" | `src/views/admin.handlebars`, `public/js/catalogImport.js`, `public/css/styles.css` | Plantilla por categoría, elegir archivo, vista previa y confirmar |
+| Catálogo de ejemplo | `docs/catalogo-ejemplo.json` | 15 componentes y monitores con modelos reales, pausados y sin stock |
+
+### Cómo funciona
+
+1. **Leer cada fila.**
+   - Cada fila tiene que ser un objeto.
+   - Pasa por `pickProductFields`, la misma lista de campos permitidos que un alta, así que `_id`, `views`, `$set` y cualquier clave desconocida se ignoran. `featured` se descarta, porque el destacado se elige en el panel.
+   - El código (`code`) es obligatorio y se pasa a mayúsculas, como lo guarda el modelo.
+2. **Buscar lo que ya existe.** Dos consultas: los productos con esos códigos y los que ya usan esos nombres. Los dos campos tienen índice único.
+   - Los `$in` se marcan con `mongoose.trusted`: son nuestros, con valores ya validados, y sin eso `sanitizeFilter` los trataría como texto literal.
+3. **Revisar fila por fila, en orden:**
+   - Código o nombre repetido dentro del archivo: "El código se repite en la fila 1".
+   - Nombre que ya usa otro producto de la base.
+   - En un producto nuevo, los campos obligatorios (`title`, `description`, `price`, `stock`, `category`).
+   - Las reglas del catálogo (`applyCatalogRules`): tipo, marca y ficha de la categoría, combinando con lo guardado si el producto ya existe.
+   - La validación del modelo (`validate()`), con los mensajes de Mongoose traducidos ("price: no puede ser menor que 0").
+4. **Clasificar.** Si el código no existe, la fila se crea. Si existe, se comparan solo los campos que trae el archivo: si alguno cambia, se actualiza (y se listan los cambios); si no, queda "Sin cambios".
+5. **Confirmar.** El servidor recalcula el plan. No usa el de la vista previa, porque la base pudo cambiar en el medio. Si hay alguna fila con error, responde 400 y no guarda nada. Si no, hace un solo `bulkWrite`:
+   - `insertOne` para las altas, con los valores por defecto del modelo;
+   - `updateOne` con `$set` de los campos del archivo para las actualizaciones.
+6. **En el navegador.**
+   - Lee el archivo, que puede pesar hasta 1 MB, y lo parsea. Si no es JSON muestra el error del parser.
+   - Pide la vista previa y muestra el resumen y una fila por producto.
+   - "Confirmar importación" queda desactivado si hay errores o si no hay nada para guardar.
+7. **Plantilla.** Se arma en el navegador con `CATEGORIES`: un producto de ejemplo con todos los campos de la ficha y una clave `_ayuda` con las opciones de cada uno. La importación ignora esa clave.
+
+### Por qué
+
+- **Todo o nada:** con 50 filas y 3 errores, guardar 47 deja el catálogo a medias y obliga a buscar cuáles faltan. Es más simple corregir el archivo y volver a cargarlo, y la vista previa dice exactamente qué corregir.
+- **Actualizar por código y solo lo que trae el archivo:** un archivo con `{ "code": "X", "price": 120 }` cambia el precio y nada más. Sirve para actualizar precios o stock en lote sin reescribir fichas.
+- **Recalcular al confirmar:** la vista previa es informativa. Si el navegador enviara "lo que hay que hacer", alguien podría mandar un plan armado a mano.
+- **Sin token de API:** la importación usa la sesión del administrador, que ya tiene cookie `HttpOnly`, límite de intentos y revocación. Un token aparte sería otro secreto para guardar y rotar.
+- **Límite de 1 MB solo en esta ruta:** el parser general de 100 KB protege al resto de la API. El de importación va antes y el general no vuelve a leer un cuerpo ya leído.
+- **El catálogo de ejemplo llega pausado y sin stock:** los precios son de referencia. Importarlo no publica nada hasta que alguien los revise y active cada producto en el panel. Solo trae los datos de ficha confirmados de cada modelo; lo dudoso queda vacío.
+
+### Límites conocidos
+
+- La importación no sube imágenes. `thumbnail` acepta una ruta `/image/...` ya subida o una dirección `https`; sin eso queda la imagen por defecto.
+- Si dos administradores importan a la vez, el segundo puede chocar con un nombre que el primero acaba de crear. El índice único lo frena y responde 409, sin guardar duplicados.
+- No se pueden borrar productos desde un archivo.
+
+### Tests
+
+En `test/import.test.js` (8 tests):
+
+- Permisos: sin sesión 401 y cliente 403, y nada se guarda.
+- La vista previa clasifica en crear, actualizar (con la lista de cambios) y sin cambios, sin guardar nada.
+- Diez errores distintos, cada uno con su mensaje:
+  - código repetido (sin distinguir mayúsculas);
+  - marca de otra categoría;
+  - ficha inválida;
+  - nombre de otro producto;
+  - precio negativo;
+  - sin código, sin título y sin categoría;
+  - fila que no es objeto.
+- Rechazo de archivos que no son una lista, vacíos o de más de 200 productos.
+- Operadores y campos no permitidos (`views`, `featured`, `_id`, `$set`) no llegan a la base.
+- La confirmación crea y actualiza.
+- Con una sola fila con error no se guarda nada.
+- `docs/catalogo-ejemplo.json` se importa sin errores y queda pausado.
+
+---
+
+## Ficha técnica en el formulario del panel (25/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| Campos Tipo, Marca, Modelo y Garantía | `src/views/admin.handlebars` | Los datos del catálogo que antes solo se podían cargar por la API |
+| Sección "Ficha técnica" | mismo archivo | Contenedor que el navegador llena según la categoría |
+| `productCatalogFields(form)` | `public/js/productForm.js` | Arma tipo, marca y ficha desde `CATEGORIES`, los llena al editar y los lee al guardar |
+| Validación antes de enviar | `public/js/admin.js` | Corre `checkCategoryFields` y `cleanSpecs`, las mismas funciones que el servidor |
+| Estilos de la ficha | `public/css/styles.css` | Una sección (`<fieldset>`) por grupo de la ficha, en grilla que se adapta al ancho |
+
+### Cómo funciona
+
+1. Al abrir el formulario, `load(product)`:
+   - llena los menús de Tipo y Marca con los de la categoría;
+   - crea un control por campo de la ficha, agrupados en `<fieldset>` con su `<legend>`.
+   Según el tipo del campo, el control es:
+   - **`select`:** un menú con sus opciones y "—" para "sin dato".
+   - **`boolean`:** un menú Sí / No / —, porque "no sé" no es lo mismo que "No".
+   - **`number`:** texto con teclado decimal (`inputmode="decimal"`) que acepta coma, igual que el servidor. La unidad va en la etiqueta: "Peso (g)".
+   - **`text`:** texto de hasta 80 caracteres.
+2. Al cambiar la categoría, todo se rearma y se conservan los valores que existen en la nueva y siguen siendo válidos. Por ejemplo, "RGB" o "Conexión" al pasar de mouse a auriculares.
+3. Al guardar, `read()` junta los valores no vacíos, convierte Sí/No en `true`/`false` y corre `checkCategoryFields` y `cleanSpecs`.
+   - Si algo falla, el mensaje es el mismo que daría el servidor ("Peso: debe ser un número").
+   - `markInvalid` marca ese campo con `aria-invalid="true"` y le pasa el foco.
+4. Se envía la ficha completa. En una edición reemplaza a la anterior, así que un campo que se vacía se borra.
+
+### Por qué
+
+- **La definición del catálogo arma el formulario:** sumar un campo o una marca en `catalogSchema.js` lo agrega a la validación, a la página del producto, a los filtros y ahora también al panel, sin tocar HTML.
+- **Validar en el navegador con el mismo código:** el error aparece al instante junto al campo y no puede ser distinto del que da la API. La API igual valida todo, porque el navegador se puede saltear.
+- **Sí/No como menú y no como casilla:** una casilla sin marcar se lee como "No". Con el menú, "—" deja el dato vacío y no aparece en la tienda.
+- **Números como texto con teclado decimal:** `type="number"` rechaza la coma en algunos navegadores con idioma inglés y muestra flechas que no sirven para un peso o una frecuencia.
+
+### Límites conocidos
+
+- Los campos de la ficha no se marcan como obligatorios: todo es opcional, como en el servidor.
+- El error del servidor se muestra arriba del botón Guardar y no se ubica en un campo; solo los errores que se detectan en el navegador marcan el campo.
+
+### Tests
+
+- `test/views.test.js`: el panel tiene Tipo, Marca, Modelo, Garantía y el contenedor de la ficha.
+- `test/catalog.test.js`: la API acepta lo que envía el formulario: números como texto con coma, Sí/No, tipo vacío (`null`) y garantía vacía.
+- En el navegador:
+  - alta de un monitor con marca, tipo, modelo, garantía y 7 campos;
+  - error "Peso: debe ser un número" con el foco en el campo;
+  - edición que carga todos los valores;
+  - sin desbordes a 375 px;
+  - contraste de los títulos de sección de 6,18:1.
+
+---
+
+## Filtros del catálogo (20/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| `filter: true` en 27 campos de la ficha | `public/js/catalogSchema.js` | Marca qué campos ofrece filtrar cada categoría (conexión, socket, panel, resolución, RGB…) |
+| `filterFields(category)` | mismo archivo | Lista los campos filtrables de una categoría |
+| `readCatalogFilters(query, category)` | `src/utils/catalogFilters.js` | Lee los filtros de la URL y descarta los que no son válidos |
+| `filtersToMatch(filters, category, except)` | mismo archivo | Convierte los filtros elegidos en condiciones de Mongo |
+| `catalogFacets(Product, base, filters, category)` | mismo archivo | Opciones de cada filtro con la cantidad de productos, en una sola consulta |
+| `RESERVED_PARAMS` | mismo archivo | Parámetros que ya usa `/products`; un test impide que un campo filtrable se llame igual |
+| Bloque "Filtros" y filtros aplicados | `src/views/home.handlebars`, `public/css/styles.css` | Un menú por filtro y un chip "Marca: Razer ✕" para quitar cada uno |
+| Envío automático y URL limpia | `public/js/filters.js` | Aplica el filtro al elegirlo, saca los campos vacíos de la URL y pliega los filtros en celular |
+
+### Cómo funciona
+
+1. La URL lleva un parámetro por filtro, con nombre legible: `/products?category=mouse&brand=Razer&sub=inalambricos&connection=Bluetooth&rgb=si`.
+   - `brand` es la marca y `sub` la subcategoría.
+   - Los campos de la ficha usan su propia clave.
+   - Los sí/no se escriben `si` y `no`.
+2. `readCatalogFilters` arma, para la categoría elegida, la lista de filtros posibles con sus opciones, en el orden de la definición del catálogo. Se queda solo con los parámetros que son texto y coinciden exactamente con una opción.
+   - Sin categoría, el único filtro es la marca, con la lista de todas las marcas.
+3. La consulta se arma en dos partes:
+   - **Base:** publicado, categoría, búsqueda y stock.
+   - **Filtros:** `filtersToMatch` traduce cada uno al campo de Mongo que le corresponde (`brand`, `subcategory` o `specs.<clave>`) y al valor guardado (`true`/`false` para los sí/no).
+   El listado paginado usa la base más los filtros.
+4. `catalogFacets` corre una sola agregación: `$match` con la base y un `$facet` con una rama por filtro. Cada rama aplica **todos los filtros menos el suyo** y agrupa por su campo.
+   - Así, con Razer elegida, el menú de marca sigue mostrando "Logitech (1)" para cambiar de una a otra.
+   - Los demás menús cuentan solo dentro de Razer.
+5. Al armar las opciones se descartan las que tienen 0 productos, salvo la elegida. También se oculta todo filtro con una sola opción, porque no ayuda a elegir, salvo que ya esté aplicado.
+6. Los links mantienen los filtros: paginación, orden y quitar un filtro (que conserva los demás). Los chips de categoría los quitan, porque la marca o el socket de una categoría no tienen sentido en otra.
+7. En el navegador, `filters.js` hace tres cosas:
+   - Envía el formulario al cambiar un menú.
+   - En el evento `formdata`, saca los campos vacíos para que la URL no quede llena de parámetros vacíos.
+   - En pantallas de 640 px o menos, pliega el bloque `<details>` si no hay filtros aplicados.
+   Sin JavaScript, los filtros quedan abiertos y se aplican con el botón "Buscar".
+
+### Por qué
+
+- **Formulario GET y no una API con JavaScript:** el resultado es una URL que se puede compartir, guardar o abrir en otra pestaña, y que el botón "atrás" respeta. Funciona sin JavaScript y lo indexan los buscadores.
+- **Las claves de Mongo nunca vienen de la URL:** el nombre del campo consultado (`specs.connection`) sale de la definición del catálogo, y el valor tiene que coincidir con una opción conocida.
+  - Un parámetro como `specs.dpi=1` o `brand[$ne]=x` se ignora, y además `sanitizeFilter` sigue activo.
+  - Por eso no hace falta ningún operador de Mongo armado con datos del usuario.
+- **Valores inválidos se ignoran, no dan error:** un link viejo o mal escrito muestra el catálogo sin ese filtro en lugar de una página de error.
+- **Conteos sin el filtro propio:** es lo que hacen las tiendas de referencia. Si cada menú contara con su propio filtro aplicado, elegir Razer dejaría el menú de marca con una sola opción y habría que limpiar para cambiar.
+- **Una sola agregación con `$facet`:** con 6 filtros serían 6 consultas; así es una, y la base (`status`, `category`) usa los índices `{ category, brand }` y `{ category, subcategory }`.
+- **Solo listas cerradas y sí/no:** un filtro de texto libre mostraría variantes del mismo valor escritas distinto. Los números (memoria, Hz, DPI) necesitan rangos, que quedan para más adelante.
+- **`<details>` para plegar:** es nativo, se maneja con teclado y anuncia su estado a los lectores de pantalla sin ARIA extra. El resumen mide 44 px de alto para tocarlo cómodo.
+
+### Límites conocidos
+
+- No hay filtros por rango (precio, memoria, frecuencia) ni de selección múltiple (dos marcas a la vez).
+- Los filtros de la ficha consultan `specs.<clave>` sin índice propio: se apoyan en el índice por categoría. Alcanza para un catálogo de cientos de productos; con miles habría que indexar los campos más usados.
+- El conteo de los chips de categoría no tiene en cuenta la búsqueda ni los filtros.
+
+### Tests
+
+En `test/filters.test.js` (11 tests):
+
+- Lectura de la URL:
+  - acepta valores de la lista;
+  - ignora la marca de otra categoría, los parámetros repetidos, los operadores, los nombres heredados (`constructor`), los campos que no son filtro, `rgb=true` y los textos de 10.000 caracteres.
+- Ningún campo filtrable choca con `RESERVED_PARAMS`.
+- Filtrado por marca, tipo, ficha y sí/no.
+- Conteos sin el filtro propio y sin opciones vacías.
+- Filtros aplicados con link para quitar cada uno.
+- Los chips de categoría quitan los filtros y la paginación los conserva.
+- Las URL maliciosas no rompen la página ni muestran HTML sin escapar.
+- Los productos sin marca se siguen listando.
+- Sin categoría, solo aparece el filtro de marca.
+
+---
+
 ## Tests automáticos en GitHub y pull requests (18/11/2026)
 
 ### Qué se agregó

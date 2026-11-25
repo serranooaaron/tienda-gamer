@@ -121,6 +121,24 @@ describe("Catálogo técnico", () => {
       }
     });
 
+    it("acepta lo que envía el formulario del panel: números como texto con coma, sí/no y campos vacíos", async () => {
+      const { agent } = await loginAs("admin");
+      const res = await agent
+        .post("/api/products")
+        .send({
+          ...productData({ category: "mouse" }),
+          subcategory: null,
+          brand: "Logitech",
+          model: "",
+          warrantyMonths: "",
+          specs: { dpi: "25600", weightG: "60,5", rgb: false, grip: "Diestro" },
+        })
+        .expect(201);
+
+      expect(res.body.payload).to.include({ brand: "Logitech", subcategory: null, warrantyMonths: null });
+      expect(res.body.payload.specs).to.deep.equal({ dpi: 25600, weightG: 60.5, rgb: false, grip: "Diestro" });
+    });
+
     it("al editar valida contra la categoría guardada y no deja cambiarla si la ficha anterior no encaja", async () => {
       const { agent } = await loginAs("admin");
       const created = (await agent.post("/api/products").send(keyboard()).expect(201)).body.payload;
