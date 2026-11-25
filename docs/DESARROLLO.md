@@ -26,6 +26,81 @@ Un patrón que se repite: **los módulos que necesitan el servidor y el navegado
 
 ---
 
+## Importar productos desde JSON (25/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| `planImport(rows)` | `src/services/catalogImport.js` | Revisa cada fila y dice si se crea, se actualiza, no cambia o tiene un error, sin guardar nada |
+| `applyImport(rows)` | mismo archivo | Vuelve a revisar todo y guarda con un solo `bulkWrite`, solo si no hay errores |
+| `previewOf(plan)` | mismo archivo | Lo que ve el navegador: resumen y filas, sin los datos completos |
+| `POST /api/products/import/preview` y `POST /api/products/import` | `src/routes/products.route.js` | Vista previa y confirmación, solo para administradores. Cuerpo `{ products: [...] }` |
+| Límite propio de 1 MB | `src/app.js` | La importación recibe hasta 200 productos; el resto de la API sigue en 100 KB |
+| Diálogo "Importar JSON" | `src/views/admin.handlebars`, `public/js/catalogImport.js`, `public/css/styles.css` | Plantilla por categoría, elegir archivo, vista previa y confirmar |
+| Catálogo de ejemplo | `docs/catalogo-ejemplo.json` | 15 componentes y monitores con modelos reales, pausados y sin stock |
+
+### Cómo funciona
+
+1. **Leer cada fila.**
+   - Cada fila tiene que ser un objeto.
+   - Pasa por `pickProductFields`, la misma lista de campos permitidos que un alta, así que `_id`, `views`, `$set` y cualquier clave desconocida se ignoran. `featured` se descarta, porque el destacado se elige en el panel.
+   - El código (`code`) es obligatorio y se pasa a mayúsculas, como lo guarda el modelo.
+2. **Buscar lo que ya existe.** Dos consultas: los productos con esos códigos y los que ya usan esos nombres. Los dos campos tienen índice único.
+   - Los `$in` se marcan con `mongoose.trusted`: son nuestros, con valores ya validados, y sin eso `sanitizeFilter` los trataría como texto literal.
+3. **Revisar fila por fila, en orden:**
+   - Código o nombre repetido dentro del archivo: "El código se repite en la fila 1".
+   - Nombre que ya usa otro producto de la base.
+   - En un producto nuevo, los campos obligatorios (`title`, `description`, `price`, `stock`, `category`).
+   - Las reglas del catálogo (`applyCatalogRules`): tipo, marca y ficha de la categoría, combinando con lo guardado si el producto ya existe.
+   - La validación del modelo (`validate()`), con los mensajes de Mongoose traducidos ("price: no puede ser menor que 0").
+4. **Clasificar.** Si el código no existe, la fila se crea. Si existe, se comparan solo los campos que trae el archivo: si alguno cambia, se actualiza (y se listan los cambios); si no, queda "Sin cambios".
+5. **Confirmar.** El servidor recalcula el plan. No usa el de la vista previa, porque la base pudo cambiar en el medio. Si hay alguna fila con error, responde 400 y no guarda nada. Si no, hace un solo `bulkWrite`:
+   - `insertOne` para las altas, con los valores por defecto del modelo;
+   - `updateOne` con `$set` de los campos del archivo para las actualizaciones.
+6. **En el navegador.**
+   - Lee el archivo, que puede pesar hasta 1 MB, y lo parsea. Si no es JSON muestra el error del parser.
+   - Pide la vista previa y muestra el resumen y una fila por producto.
+   - "Confirmar importación" queda desactivado si hay errores o si no hay nada para guardar.
+7. **Plantilla.** Se arma en el navegador con `CATEGORIES`: un producto de ejemplo con todos los campos de la ficha y una clave `_ayuda` con las opciones de cada uno. La importación ignora esa clave.
+
+### Por qué
+
+- **Todo o nada:** con 50 filas y 3 errores, guardar 47 deja el catálogo a medias y obliga a buscar cuáles faltan. Es más simple corregir el archivo y volver a cargarlo, y la vista previa dice exactamente qué corregir.
+- **Actualizar por código y solo lo que trae el archivo:** un archivo con `{ "code": "X", "price": 120 }` cambia el precio y nada más. Sirve para actualizar precios o stock en lote sin reescribir fichas.
+- **Recalcular al confirmar:** la vista previa es informativa. Si el navegador enviara "lo que hay que hacer", alguien podría mandar un plan armado a mano.
+- **Sin token de API:** la importación usa la sesión del administrador, que ya tiene cookie `HttpOnly`, límite de intentos y revocación. Un token aparte sería otro secreto para guardar y rotar.
+- **Límite de 1 MB solo en esta ruta:** el parser general de 100 KB protege al resto de la API. El de importación va antes y el general no vuelve a leer un cuerpo ya leído.
+- **El catálogo de ejemplo llega pausado y sin stock:** los precios son de referencia. Importarlo no publica nada hasta que alguien los revise y active cada producto en el panel. Solo trae los datos de ficha confirmados de cada modelo; lo dudoso queda vacío.
+
+### Límites conocidos
+
+- La importación no sube imágenes. `thumbnail` acepta una ruta `/image/...` ya subida o una dirección `https`; sin eso queda la imagen por defecto.
+- Si dos administradores importan a la vez, el segundo puede chocar con un nombre que el primero acaba de crear. El índice único lo frena y responde 409, sin guardar duplicados.
+- No se pueden borrar productos desde un archivo.
+
+### Tests
+
+En `test/import.test.js` (8 tests):
+
+- Permisos: sin sesión 401 y cliente 403, y nada se guarda.
+- La vista previa clasifica en crear, actualizar (con la lista de cambios) y sin cambios, sin guardar nada.
+- Diez errores distintos, cada uno con su mensaje:
+  - código repetido (sin distinguir mayúsculas);
+  - marca de otra categoría;
+  - ficha inválida;
+  - nombre de otro producto;
+  - precio negativo;
+  - sin código, sin título y sin categoría;
+  - fila que no es objeto.
+- Rechazo de archivos que no son una lista, vacíos o de más de 200 productos.
+- Operadores y campos no permitidos (`views`, `featured`, `_id`, `$set`) no llegan a la base.
+- La confirmación crea y actualiza.
+- Con una sola fila con error no se guarda nada.
+- `docs/catalogo-ejemplo.json` se importa sin errores y queda pausado.
+
+---
+
 ## Ficha técnica en el formulario del panel (25/11/2026)
 
 ### Qué se agregó
