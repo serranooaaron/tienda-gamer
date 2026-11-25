@@ -673,6 +673,16 @@ h1, h2 { text-wrap: balance; }
 .modal__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .field--wide { grid-column: 1 / -1; }
 .modal__foot { display: flex; justify-content: flex-end; gap: 10px; }
+
+/* Ficha técnica en el formulario del panel: una sección por grupo de la ficha */
+.spec-form { display: grid; gap: 10px; padding-top: 14px; border-top: 1px solid var(--border); }
+.spec-form__title { font-size: 1rem; }
+.spec-form__title small { color: var(--muted); font-weight: 600; }
+.spec-form__section { min-width: 0; margin: 0; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.spec-form__section legend { padding: 0 6px; font-weight: 700; font-size: 0.85rem; color: var(--accent-2); }
+.spec-form__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 10px; }
+.spec-form__grid .field input, .spec-form__grid .field select { padding: 9px 12px; }
+.field select[aria-invalid="true"] { border-color: #f87171; }
 .confirm { width: min(420px, calc(100vw - 32px)); padding: 22px; }
 .confirm__message { font-size: 1.05rem; margin-bottom: 20px; overflow-wrap: anywhere; }
 .confirm .modal__foot { flex-wrap: wrap; }
