@@ -13,8 +13,9 @@
     {{/each}}
   </nav>
 
-  <form class="toolbar" method="GET" action="/products" role="search">
+  <form class="catalog-form" method="GET" action="/products" role="search" data-catalog-form>
     {{#if category}}<input type="hidden" name="category" value="{{category}}" />{{/if}}
+    <div class="toolbar">
     <div class="toolbar__search">
       <label class="sr-only" for="q">Buscar</label>
       <input class="input" id="q" name="q" type="search" value="{{q}}" placeholder="Buscar por nombre o descripción…" maxlength="60" />
@@ -39,7 +40,35 @@
     </div>
     <button class="btn btn--primary" type="submit">Buscar</button>
     {{#if hasFilters}}<a class="btn btn--ghost" href="/products">Limpiar</a>{{/if}}
+    </div>
+
+    {{#if facets.length}}
+      <details class="facets" open data-facets {{#if activeFilters.length}}data-active{{/if}}>
+        <summary class="facets__summary">
+          Filtros{{#if activeFilters.length}} <span class="facets__count">{{activeFilters.length}}<span class="sr-only">{{#if (eq activeFilters.length 1)}} aplicado{{else}} aplicados{{/if}}</span></span>{{/if}}
+        </summary>
+        <div class="facets__grid">
+          {{#each facets}}
+            <div class="field">
+              <label for="f-{{name}}">{{label}}</label>
+              <select id="f-{{name}}" name="{{name}}" data-autosubmit>
+                <option value="">Cualquiera</option>
+                {{#each options}}<option value="{{value}}" {{#if selected}}selected{{/if}}>{{label}} ({{count}})</option>{{/each}}
+              </select>
+            </div>
+          {{/each}}
+        </div>
+      </details>
+    {{/if}}
   </form>
+
+  {{#if activeFilters.length}}
+    <ul class="active-filters" aria-label="Filtros aplicados">
+      {{#each activeFilters}}
+        <li><a class="chip chip--removable" href="{{link}}">{{label}} <span aria-hidden="true">✕</span><span class="sr-only"> (quitar)</span></a></li>
+      {{/each}}
+    </ul>
+  {{/if}}
 
   <h2 class="sr-only">Resultados</h2>
   <section class="product-grid">
