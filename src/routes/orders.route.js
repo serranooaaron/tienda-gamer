@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 import Order from "../models/order.model.js";
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import { CheckoutError, createOrderFromCart } from "../services/orders.service.js";
+import { startPayment } from "../services/payments.service.js";
+import { PaymentError } from "../services/mercadoPago.js";
 
 // Tope de órdenes por consulta: el listado no crece sin límite.
 export const ORDERS_LIMIT = 50;
@@ -22,6 +24,19 @@ ordersRouter.post("/", async (req, res) => {
       return res.status(error.status).json({ status: "error", message: error.message });
     }
     return res.status(500).json({ status: "error", message: "No se pudo completar la compra" });
+  }
+});
+
+// Inicia el pago de una orden propia pendiente: devuelve la dirección de Checkout Pro.
+// Detrás del proxy de Render, req.protocol es https gracias a TRUST_PROXY.
+ordersRouter.post("/:oid/pay", async (req, res) => {
+  try {
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const payload = await startPayment({ orderId: req.params.oid, userId: req.user.id, baseUrl });
+    return res.status(201).json({ status: "success", payload });
+  } catch (error) {
+    if (error instanceof PaymentError) return res.status(error.status).json({ status: "error", message: error.message });
+    return res.status(500).json({ status: "error", message: "No se pudo iniciar el pago" });
   }
 });
 

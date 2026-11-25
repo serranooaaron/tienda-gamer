@@ -17,7 +17,19 @@ const orderSchema = new mongoose.Schema({
     type: [orderItemSchema],
     validate: (items) => items.length > 0
   },
-  total: { type: Number, required: true, min: 0 }
+  total: { type: Number, required: true, min: 0 },
+  // "pendiente" hasta que Mercado Pago confirma el pago. Las órdenes creadas antes de los
+  // pagos no tienen este campo: se muestran como compras de demostración.
+  status: { type: String, enum: ["pendiente", "pagada", "cancelada"], default: "pendiente" },
+  // Datos del pago tal como los informa la API de Mercado Pago (nunca los de la URL).
+  payment: {
+    preferenceId: { type: String, default: null },
+    id: { type: String, default: null },
+    status: { type: String, default: null },
+    statusDetail: { type: String, default: null },
+    method: { type: String, default: null },
+    updatedAt: { type: Date, default: null }
+  }
 }, { timestamps: true });
 
 // "Mis compras": las órdenes de un usuario, de la más nueva a la más vieja.

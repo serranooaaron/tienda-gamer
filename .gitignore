@@ -3,3 +3,6 @@
 .claude
 # Imágenes de productos subidas desde el panel
 /public/image/uploads/
+
+# Added by ggshield
+.cache_ggshield

@@ -27,12 +27,12 @@
         <div class="cart__total"><dt>Total</dt><dd>{{money totalAmount}}</dd></div>
       </dl>
       {{#if canConfirm}}
-        <button class="btn btn--primary btn--block" type="button" data-confirm-order>Confirmar compra</button>
+        <button class="btn btn--primary btn--block" type="button" data-confirm-order>Pagar con Mercado Pago</button>
       {{else}}
         <p class="notice" role="alert">Hay productos sin stock suficiente. Ajusta tu carrito para continuar.</p>
       {{/if}}
       <a class="btn btn--block" href="/cart">Volver al carrito</a>
-      <p class="demo-note">Tienda de demostración: no se realiza ningún cobro ni envío.</p>
+      <p class="demo-note">Pago de prueba con Mercado Pago: no se cobra dinero real ni se hacen envíos. Al pagar, tus productos quedan reservados.</p>
     </aside>
   </div>
 </main>
