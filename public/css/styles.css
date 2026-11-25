@@ -788,6 +788,33 @@ h1, h2 { text-wrap: balance; }
   .order-card:hover { border-color: var(--accent-2); }
 }
 
+/* Aviso de las recomendaciones: qué se guarda y cómo borrarlo */
+.privacy-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.privacy-note p { flex: 1 1 260px; margin: 0; }
+.privacy-note .btn { min-height: 40px; }
+.privacy-note--done { margin-top: 24px; color: var(--text); }
+
+/* Panel: lo más visto */
+.most-viewed { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; margin-top: 16px; }
+.most-viewed__card { padding: 14px 16px; border-radius: var(--radius); border: 1px solid var(--border); background: var(--surface); min-width: 0; }
+.most-viewed__card h3 { font-size: 0.85rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.most-viewed__card ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.most-viewed__card li { overflow-wrap: anywhere; }
+.most-viewed__card li span { color: var(--muted); font-variant-numeric: tabular-nums; }
+
 .notice {
   margin: 0;
   padding: 12px 14px;

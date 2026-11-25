@@ -39,6 +39,28 @@
     </section>
   {{/if}}
 
+  {{#if forgotten}}
+    <div class="container">
+      <p class="privacy-note privacy-note--done" role="status">Listo: borramos lo que miraste. No vas a ver recomendaciones hasta que vuelvas a recorrer el catálogo.</p>
+    </div>
+  {{/if}}
+
+  {{#if recommended}}
+    <section class="container section" id="recomendados" aria-labelledby="recommended-title">
+      <div class="section__head">
+        <h2 id="recommended-title">Porque viste {{categoryLabel recommended.category}}</h2>
+        <a class="btn btn--ghost btn--sm" href="/products?category={{recommended.category}}">Ver todo →</a>
+      </div>
+      <div class="product-grid">
+        {{#each recommended.products}}{{> productCard}}{{/each}}
+      </div>
+      <form class="privacy-note" method="POST" action="/intereses/olvidar">
+        <p>Lo elegimos con las categorías y marcas que miraste en este navegador. Se guarda 30 días en una cookie de la tienda, sin datos personales.</p>
+        <button class="btn btn--ghost btn--sm" type="submit">Olvidar lo que miré</button>
+      </form>
+    </section>
+  {{/if}}
+
   {{#if featured.length}}
     <section class="container section">
       <div class="section__head">

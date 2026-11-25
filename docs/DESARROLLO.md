@@ -26,6 +26,79 @@ Un patrón que se repite: **los módulos que necesitan el servidor y el navegado
 
 ---
 
+## Recomendaciones por intereses (25/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| Cookie `tg_intereses` | `src/utils/interests.js` | Guarda en el navegador qué categorías y marcas mira cada visitante, sin datos personales |
+| `readInterests(req)` | mismo archivo | Lee la cookie y descarta todo lo que no sea una categoría o marca del catálogo |
+| `recordInterest(req, res, { category, brand })` | mismo archivo | Suma una visita y reescribe la cookie (30 días) |
+| `clearInterests(res)` y `topInterest(interests)` | mismo archivo | Borrar la cookie; elegir la categoría más vista |
+| `isVisitor(req)` | `src/routes/views.route.js` | Ni el administrador ni los bots cuentan como visitantes (lo comparte con el contador de vistas) |
+| `pickRecommended(interest, excludeId)` | mismo archivo | Hasta 4 productos de la categoría más vista, primero los de las marcas más vistas |
+| `POST /intereses/olvidar` | mismo archivo | Borra la cookie y vuelve al inicio con una confirmación |
+| Sección "Porque viste …" | `src/views/index.handlebars`, `public/css/styles.css` | Productos recomendados, aviso de qué se guarda y botón "Olvidar lo que miré" |
+| "Lo más visto" en el panel | `src/views/admin.handlebars` y ruta `/admin` | Top 5 de productos, categorías y marcas por vistas |
+
+### Cómo funciona
+
+1. **Qué cuenta como interés.** Ver la página de un producto suma su categoría y su marca. Entrar a la primera página de una categoría suma la categoría. En los dos casos, solo si es un visitante real.
+2. **La cookie.**
+   - Formato: `teclados~3|mouse~1/Razer~2|Cooler Master~1`. A la izquierda de `/` van las categorías y a la derecha las marcas, cada una con su cantidad.
+   - Ningún nombre del catálogo usa `|`, `~` ni `/`, así que no hace falta escapar nada.
+   - Guarda hasta 5 categorías y 10 marcas, las más vistas. Cada cantidad tiene un tope de 99.
+   - Opciones: `HttpOnly`, `SameSite=Lax`, `Secure` en producción y 30 días de duración.
+3. **Al leerla, `readInterests` la valida entera.**
+   - Si es más larga que 600 caracteres o no es texto, se descarta.
+   - Cada nombre tiene que existir en `CATEGORIES` (categorías) o en la lista de marcas, y cada cantidad tiene que ser un entero positivo.
+   - Lo demás se ignora: `__proto__`, `<script>`, categorías inventadas y nombres repetidos.
+4. **En el inicio**, `topInterest` elige la categoría más vista y `pickRecommended` trae hasta 24 productos a la venta de esa categoría, ordenados por vistas.
+   - Los reordena poniendo primero los de las marcas que más mira el visitante, y se queda con 4.
+   - No repite el producto de la imagen grande.
+   - Si no hay ninguno, la sección no aparece.
+5. **"Olvidar lo que miré"** es un formulario POST. El servidor borra la cookie (`clearCookie` con las mismas opciones) y redirige a `/?olvidado=1`, que muestra la confirmación sin recomendaciones.
+   - En esa redirección la cookie vieja todavía viaja: por eso la página ignora las recomendaciones cuando trae `olvidado=1`.
+6. **En el panel**, tres agregaciones suman las vistas por categoría y por marca, y una consulta trae los productos más vistos. Son totales de la tienda, armados con el contador de vistas que ya existía.
+
+### Por qué
+
+- **Una cookie en lugar de guardar en la base:** no hay que identificar al visitante ni tener cuentas para recomendar. Lo que se sabe de él vive solo en su navegador, vence sola a los 30 días y se borra con un botón.
+- **Sin datos personales:** solo nombres de categorías y marcas del catálogo, que son públicos. Ni ids de producto, ni email, ni IP.
+- **Validar todo al leer:** la cookie la escribe el servidor, pero cualquiera puede editarla. Como solo se aceptan nombres de una lista conocida, nada de la cookie llega a una consulta ni a la página sin pasar por esa lista.
+- **`HttpOnly`:** el navegador no necesita leerla. Así un script inyectado tampoco puede leerla.
+- **Olvidar con POST:** con un GET, cualquier imagen o link de otro sitio podría borrar los intereses. `SameSite=Lax` y el POST lo evitan.
+- **No cuentan el administrador ni los bots:** si no, el administrador revisando la tienda y los buscadores llenarían las recomendaciones y las estadísticas.
+- **Las estadísticas del panel son agregadas:** muestran qué interesa en la tienda, no qué miró cada persona. La API pública no expone nada de esto.
+
+### Límites conocidos
+
+- La recomendación usa la categoría más vista y no mezcla categorías.
+- Si el visitante borra las cookies o cambia de navegador, empieza de cero.
+- Las vistas por categoría y marca del panel suman las vistas de los productos actuales: si un producto cambia de categoría, sus vistas pasan con él.
+
+### Tests
+
+En `test/interests.test.js` (12 tests):
+
+- Cookie:
+  - solo acepta nombres del catálogo, con cantidades enteras y tope;
+  - descarta `__proto__`, `<script>`, cantidades negativas o no numéricas y cookies largas o que no son texto;
+  - se guarda con `HttpOnly`, `SameSite=Lax` y 30 días, sin el id del producto.
+- Qué cuenta:
+  - entrar a una categoría cuenta, pero no a una inventada;
+  - el administrador y los bots no guardan nada.
+- Inicio:
+  - sin intereses no hay sección;
+  - con intereses, la categoría más vista y primero las marcas más vistas;
+  - no se repite el producto de la imagen grande;
+  - "Olvidar" borra la cookie, confirma y deja de recomendar;
+  - olvidar no responde a GET.
+- Panel: lo más visto solo para el administrador.
+
+---
+
 ## Importar productos desde JSON (25/11/2026)
 
 ### Qué se agregó
