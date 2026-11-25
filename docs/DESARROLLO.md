@@ -26,6 +26,81 @@ Un patrón que se repite: **los módulos que necesitan el servidor y el navegado
 
 ---
 
+## Recuperar la contraseña por email y versión de sesión (25/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| `sessionVersion` en el usuario y `sv` en el token | `src/models/user.model.js`, `src/utils/auth.js` | Poder cerrar todas las sesiones de una cuenta de una vez |
+| `currentAccount` en `attachUser` | `src/middlewares/auth.middleware.js` | Además de la firma y la revocación, compara la versión de sesión; el rol sale de la base |
+| Colección `passwordresets` | `src/models/passwordReset.model.js` | Pedidos pendientes: usuario, **hash** del token y vencimiento (índice TTL) |
+| `sendResetEmail`, `findValidReset`, `consumeReset`, `clearResets` | `src/utils/passwordReset.js` | Token de un solo uso que vence a los 30 minutos y email con el link |
+| `mailer.send`, `appUrl`, `escapeHtml` | `src/utils/mailer.js` | Envío con la API de Brevo (con `fetch`, sin SDK); el dominio del link sale de `APP_URL` |
+| `POST /api/sessions/forgot` y `POST /api/sessions/reset` | `src/routes/sessions.route.js` | Pedir el link y crear la contraseña nueva; `forgotLimiter` (3 por email y 10 por conexión, cada hora) |
+| Páginas `/recuperar` y `/restablecer` | `forgot.handlebars`, `reset.handlebars`, `public/js/recover.js`, `styles.css` | Formularios y el link "¿Olvidaste tu contraseña?" en el login |
+| Variables nuevas | `.env.example` | `APP_URL`, `BREVO_API_KEY`, `MAIL_FROM`, `MAIL_FROM_NAME` |
+
+### Cómo funciona
+
+1. **El pedido.** `/recuperar` valida el email y lo cuenta en el límite.
+   - **Responde siempre el mismo mensaje.**
+   - Si la cuenta existe, envía el email **después de responder**, así ni el texto ni la demora revelan qué emails tienen cuenta.
+2. **El token.** `sendResetEmail` borra los pedidos anteriores de la cuenta y genera 32 bytes aleatorios en `base64url`. En la base guarda solo su SHA-256, con vencimiento a los 30 minutos.
+3. **El link.** Es `${APP_URL}/restablecer?token=…`. `/restablecer` responde con `Referrer-Policy: no-referrer` y muestra el formulario si el pedido sigue vigente; si no, ofrece pedir otro.
+4. **La contraseña nueva.** `POST /api/sessions/reset`:
+   - aplica la regla del registro;
+   - recién entonces consume el token con `findOneAndDelete`;
+   - guarda el hash nuevo y suma 1 a `sessionVersion` en el mismo `updateOne`;
+   - borra los demás pedidos y limpia el bloqueo de login de esa cuenta.
+5. **En cada pedido con sesión.** `attachUser`:
+   - verifica la firma;
+   - mira que el token no esté revocado (logout);
+   - busca la cuenta (`role sessionVersion`) y compara la versión.
+   Si la contraseña se recuperó después de firmar el token, o la cuenta ya no existe, la sesión se descarta. Los tokens sin `sv`, de antes de este cambio, cuentan como versión 0.
+
+### Por qué
+
+- **Recuperación sin el administrador:** quien olvida la contraseña prueba que es dueño del email y la cambia solo.
+- **Dos mecanismos de sesión:**
+  - la lista de tokens revocados sigue sirviendo para cerrar **una** sesión (logout);
+  - la versión de sesión cierra **todas** de una vez, sin guardar cada token.
+- **`APP_URL` y no el `Host` del pedido:** con el `Host`, alguien podría pedir el link de otra persona con `Host: sitio-falso.com` y robarle el token desde un email legítimo. Hay un test con `Host` y `X-Forwarded-Host` falsos.
+- **Hash del token, misma respuesta y envío en segundo plano:** un backup de la base no sirve para usar links pendientes, y el formulario no sirve para averiguar qué emails tienen cuenta.
+- **Validar antes de consumir:** una contraseña débil no gasta el link.
+- **El rol se lee de la base:** como `attachUser` ya busca la cuenta, quitarle el rol de administrador a alguien corta su acceso en ese momento, no cuando vence su token de 24 horas.
+
+### Límites conocidos
+
+- Cada pedido con sesión hace una consulta más, por `_id`, que es el índice principal.
+- El límite de pedidos vive en la memoria del proceso.
+- Si Brevo falla, la persona ve el mismo mensaje y el error queda en el log.
+- Sin dominio propio, los emails pueden llegar a spam.
+- Todavía no hay "cambiar contraseña" desde un perfil en la tienda (la biblioteca sí lo tiene).
+
+### Tests
+
+En `test/passwordReset.test.js` (10 tests). Ninguno llama a Brevo.
+
+- Pedido:
+  - misma respuesta con y sin cuenta;
+  - hash en la base;
+  - `Host` falso.
+- Validación del email y límite de pedidos.
+- Restablecer:
+  - cierra la sesión de los dos dispositivos;
+  - la contraseña vieja deja de servir;
+  - el link no sirve dos veces;
+  - pedir otro link anula el anterior;
+  - un link vencido no sirve;
+  - una contraseña débil no gasta el link.
+- Ataques: tokens inventados u operadores, y dos usos simultáneos (gana uno).
+- El email escapa el nombre.
+- Quitar el rol de administrador corta el acceso al panel.
+- El login ofrece recuperar la contraseña.
+
+---
+
 ## Pago con Mercado Pago, parte 1: Checkout Pro y vuelta verificada (25/11/2026)
 
 ### Qué se agregó

@@ -23,7 +23,9 @@ export const signToken = (user) =>
       name: `${user.first_name} ${user.last_name}`,
       email: user.email,
       role: user.role,
-      cart: user.cart?.toString()
+      cart: user.cart?.toString(),
+      // Versión de sesión al firmar: si después cambia, este token deja de valer.
+      sv: user.sessionVersion ?? 0
     },
     getJwtSecret(),
     // jwtid: identificador único de esta sesión, para poder revocarla al cerrar sesión.
