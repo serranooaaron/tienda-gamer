@@ -26,6 +26,78 @@ Un patrón que se repite: **los módulos que necesitan el servidor y el navegado
 
 ---
 
+## Pago con Mercado Pago, parte 1: Checkout Pro y vuelta verificada (25/11/2026)
+
+### Qué se agregó
+
+| Pieza | Archivo | Para qué |
+|---|---|---|
+| `status` y `payment` en la orden | `src/models/order.model.js` | La orden nace "pendiente" y guarda los datos del pago tal como los informa Mercado Pago |
+| Cliente de la API | `src/services/mercadoPago.js` | `createPreference` y `getPayment` con el `fetch` de Node, sin SDK; `PaymentError`; `paymentsConfigured()` |
+| `startPayment` | `src/services/payments.service.js` | Arma la preferencia con los productos y precios de la orden guardada |
+| `confirmPayment` | mismo archivo | Consulta el pago real y actualiza la orden con una transición condicional |
+| `POST /api/orders/:oid/pay` | `src/routes/orders.route.js` | Devuelve la dirección de Checkout Pro de una orden propia y pendiente |
+| `GET /orders/:oid/pago` | `src/routes/views.route.js` | Vuelta desde Mercado Pago: confirma y redirige al detalle |
+| `paymentState(order)` | mismo archivo | Etiqueta y mensaje de cada estado: pendiente, pago en proceso, rechazado, pagada, demostración |
+| Pantallas | `checkout.handlebars`, `orderDetail.handlebars`, `orders.handlebars`, `public/js/checkout.js` | "Pagar con Mercado Pago", el estado en "Mis compras" y reintento desde el detalle |
+
+### Cómo funciona
+
+1. **"Pagar con Mercado Pago" en el checkout.**
+   - `POST /api/orders` crea la orden como antes: reserva el stock y vacía el carrito, ahora con `status: "pendiente"`.
+   - Después, `POST /api/orders/:oid/pay` crea la preferencia y el navegador va a `init_point`.
+   - Si Mercado Pago no responde, la orden queda pendiente y el comprador va a su detalle, donde puede volver a intentarlo.
+2. **La preferencia.**
+   - Un ítem por línea de la orden, con `unit_price` y `quantity` de la orden guardada y `currency_id: "ARS"`.
+   - `external_reference` es el id de la orden.
+   - Las tres `back_urls` apuntan a `/orders/:oid/pago`.
+   - `auto_return: "approved"` solo con https, porque Mercado Pago no vuelve solo a un sitio http y no acepta `localhost`.
+   - El id de la preferencia queda en la orden.
+3. **La vuelta.** De la URL solo se usa `payment_id`, y solo si son dígitos. `confirmPayment` consulta `GET /v1/payments/:id` y comprueba:
+   - que `external_reference` sea esta orden;
+   - que, si está aprobado, `transaction_amount` sea igual al total de la orden.
+   Después guarda id, estado, detalle y medio de pago.
+4. **Solo `approved` pasa la orden a "pagada".**
+   - `rejected` la deja pendiente con el aviso "Pago rechazado" y el botón para reintentar.
+   - `pending` e `in_process` la dejan como "Pago en proceso".
+   - La actualización es `updateOne({ _id, status: "pendiente" }, …)`: si ya estaba pagada, no se toca.
+5. **Redirección final.** La vuelta redirige con 303 a `/orders/:oid?pago=1`. Recargar el detalle no vuelve a consultar ni a escribir. El aviso sale del estado guardado, no de la URL.
+
+### Por qué
+
+- **Precios de la base:** el navegador no manda precios ni totales. Aunque el precio del producto cambie después de comprar, se cobra lo que quedó en la orden (hay un test que lo comprueba).
+- **No confiar en la URL de vuelta:** cualquiera puede escribir `?status=approved`. Solo cuenta lo que responde la API con el token de la tienda, y además el pago tiene que ser de esta orden y por su total.
+- **Transición condicional:** dos vueltas simultáneas, o un aviso viejo de "rechazado" que llega tarde, no deshacen una orden pagada. Es la misma idea que el descuento de stock atómico del checkout.
+- **Sin SDK:** son dos llamadas HTTP. El `fetch` de Node 24 alcanza, con tiempo límite de 10 s y `X-Idempotency-Key` en los POST. Una dependencia menos para auditar.
+- **Token solo en el servidor:** sale de `MP_ACCESS_TOKEN`, nunca llega al navegador ni a los logs. Los errores de la API se registran sin el token y al comprador le llega un mensaje genérico.
+- **Sin token, la tienda sigue funcionando:** no muestra el botón de pago y la API responde 503 "Los pagos no están configurados".
+- **Compras anteriores:** no tienen `status`. Se muestran como "Demostración" y no se pueden pagar.
+
+### Límites conocidos (parte 2)
+
+- No hay webhook todavía. Si el comprador cierra la pestaña después de pagar y no vuelve, la orden queda pendiente hasta que entre a su detalle por la vuelta. La parte 2 suma la notificación con firma verificada.
+- El stock reservado de una orden que nunca se paga no vuelve solo. La parte 2 lo devuelve cuando el pago se rechaza en forma definitiva o la orden vence.
+- La vuelta automática (`auto_return`) solo funciona en el sitio publicado con https. En desarrollo se usa el botón "Volver al sitio" o se arma la URL de vuelta a mano.
+
+### Tests
+
+En `test/payments.test.js` (11 tests). Ninguno llama a Mercado Pago: se reemplazan `createPreference` y `getPayment` del cliente.
+
+- La orden nace pendiente.
+- La preferencia usa los precios guardados aunque el producto cambie de precio.
+- Pagar: solo el dueño y solo una orden pendiente; sin token, 503.
+- Vuelta aprobada → pagada, ignorando lo que dice la URL.
+- Una URL sin `payment_id` válido no cambia nada.
+- Se rechaza un pago de otra orden o por otro monto.
+- Pago rechazado y en proceso → la orden sigue pendiente, con su aviso.
+- Doble vuelta y aviso tardío no deshacen el pago.
+- Nadie confirma una orden ajena.
+- Las compras viejas se ven como demostración.
+
+En el navegador, con la cuenta vendedora de prueba: el checkout de Mercado Pago abrió con el total de la orden ($400). Para completar el pago, Mercado Pago exige una cuenta compradora de prueba ("Una de las partes con la que intentás hacer el pago es de prueba").
+
+---
+
 ## Recomendaciones por intereses (25/11/2026)
 
 ### Qué se agregó
