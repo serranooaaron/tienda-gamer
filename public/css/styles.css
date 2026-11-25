@@ -771,7 +771,7 @@ h1, h2 { text-wrap: balance; }
 .order-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
 .order-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
   align-items: center;
   gap: 24px;
   padding: 16px 18px;
@@ -831,6 +831,8 @@ h1, h2 { text-wrap: balance; }
   border-color: rgb(34 197 94 / 0.4);
 }
 .demo-note { color: var(--muted); font-size: 0.82rem; text-align: center; }
+.order-state { color: var(--muted); margin: -8px 0 20px; }
+.order-card .badge { justify-self: start; }
 
 @media (max-width: 960px) {
   .cart { grid-template-columns: minmax(0, 1fr); }

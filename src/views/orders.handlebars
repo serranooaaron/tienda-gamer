@@ -12,6 +12,7 @@
             <span class="order-card__code">{{code}}</span>
             <time datetime="{{isoDate createdAt}}">{{dateTime createdAt}}</time>
             <span class="order-card__units">{{units}} {{#if (eq units 1)}}unidad{{else}}unidades{{/if}}</span>
+            <span class="badge {{state.badge}}">{{state.label}}</span>
             <strong>{{money total}}</strong>
           </a>
         </li>

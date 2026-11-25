@@ -233,7 +233,8 @@ describe("Compras", () => {
 
       expect(list.text).to.include(body.payload.code);
       expect(detail.text).to.include("Mouse comprado");
-      expect(detail.text).to.include("¡Compra confirmada!");
+      expect(detail.text).to.include("Compra registrada");
+      expect(list.text).to.include("Pendiente de pago");
     });
   });
 });

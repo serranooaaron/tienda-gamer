@@ -13,6 +13,8 @@ import { CATEGORY_LABELS } from "../utils/handlebars.js";
 import { listUploadedImages } from "../utils/uploader.js";
 import { passwordChecks } from "../../public/js/passwordPolicy.js";
 import { specSheet } from "../../public/js/catalogSchema.js";
+import { confirmPayment } from "../services/payments.service.js";
+import { PaymentError, paymentsConfigured } from "../services/mercadoPago.js";
 import { clearInterests, readInterests, recordInterest, topInterest } from "../utils/interests.js";
 import { catalogFacets, filtersToMatch, readCatalogFilters } from "../utils/catalogFilters.js";
 
@@ -349,10 +351,36 @@ viewsRouter.get("/orders", requireAuth, async (req, res) => {
       orders: orders.map((order) => ({
         ...order,
         units: order.items.reduce((acc, item) => acc + item.quantity, 0),
+        state: paymentState(order),
       })),
     });
   } catch (error) {
     return renderError(res, 500, "No es posible mostrar tus compras");
+  }
+});
+
+// Estado de una compra para mostrar: etiqueta, estilo del badge y mensaje.
+const paymentState = (order) => {
+  if (!order.status) return { label: "Demostración", badge: "", message: "Compra hecha antes de los pagos: no tuvo cobro." };
+  if (order.status === "pagada") return { label: "Pagada", badge: "badge--ok", message: "Mercado Pago aprobó el pago." };
+  if (order.status === "cancelada") return { label: "Cancelada", badge: "badge--out", message: "La compra se canceló y los productos volvieron al stock." };
+  if (order.payment?.status === "rejected") return { label: "Pago rechazado", badge: "badge--out", message: "Mercado Pago rechazó el pago. Puedes intentarlo de nuevo con otro medio." };
+  if (["pending", "in_process", "authorized"].includes(order.payment?.status)) {
+    return { label: "Pago en proceso", badge: "badge--warn", message: "Mercado Pago todavía está procesando el pago. Te avisamos acá cuando se acredite." };
+  }
+  return { label: "Pendiente de pago", badge: "badge--warn", message: "Reservamos tus productos. Falta pagar la compra." };
+};
+
+// Vuelta desde Mercado Pago. De la URL solo se toma el id del pago; el estado se consulta a
+// la API y se guarda en la orden. Después se redirige al detalle, así recargar no repite nada.
+viewsRouter.get("/orders/:oid/pago", requireAuth, async (req, res) => {
+  try {
+    const paymentId = typeof req.query.payment_id === "string" ? req.query.payment_id : "";
+    const order = await confirmPayment({ orderId: req.params.oid, userId: req.user.id, paymentId });
+    return res.redirect(303, `/orders/${order._id}?pago=1`);
+  } catch (error) {
+    if (error instanceof PaymentError) return renderError(res, error.status, error.message);
+    return renderError(res, 500, "No pudimos confirmar el pago. Revisa tu compra en unos minutos");
   }
 });
 
@@ -368,6 +396,10 @@ viewsRouter.get("/orders/:oid", requireAuth, async (req, res) => {
       order,
       items: order.items.map((item) => ({ ...item, subtotal: item.price * item.quantity })),
       justPlaced: req.query.nueva === "1",
+      // El aviso sale del estado guardado, nunca de lo que diga la URL.
+      paymentState: paymentState(order),
+      justReturned: req.query.pago === "1",
+      canPay: order.status === "pendiente" && paymentsConfigured(),
     });
   } catch (error) {
     return renderError(res, 500, "No es posible mostrar esta compra");
